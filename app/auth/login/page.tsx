@@ -47,7 +47,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium text-foreground">
             Email address
@@ -58,7 +58,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
-            className="w-full"
+            className="w-full h-10 sm:h-11"
             required
           />
         </div>
@@ -74,7 +74,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full pr-10"
+              className="w-full h-10 sm:h-11 pr-10"
               required
             />
             <Button
@@ -111,7 +111,7 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full h-10 sm:h-11" disabled={isLoading}>
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
 

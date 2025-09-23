@@ -72,24 +72,24 @@ export default function AgentsPage() {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col bg-background">
         {/* Chat Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-6xl mb-4">
+                <div className="text-4xl sm:text-6xl mb-4">
                   {selectedAgentData && (
-                    <selectedAgentData.icon className={`h-16 w-16 mx-auto ${selectedAgentData.color}`} />
+                    <selectedAgentData.icon className={`h-12 w-12 sm:h-16 sm:w-16 mx-auto ${selectedAgentData.color}`} />
                   )}
                 </div>
-                <h2 className="text-2xl font-semibold text-foreground mb-2">AI Email Assistant</h2>
-                <p className="text-muted-foreground">Choose an agent and start chatting to manage your emails</p>
+                <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">AI Email Assistant</h2>
+                <p className="text-sm sm:text-base text-muted-foreground px-4">Choose an agent and start chatting to manage your emails</p>
               </div>
             </div>
           ) : (
             messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                  className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${
                     msg.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
                   }`}
                 >
@@ -105,7 +105,7 @@ export default function AgentsPage() {
                       {agents.find((a) => a.id === msg.agent)?.name} Agent
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <p className="text-xs sm:text-sm leading-relaxed">{msg.content}</p>
                 </div>
               </div>
             ))
@@ -134,16 +134,16 @@ export default function AgentsPage() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-border p-4">
+        <div className="border-t border-border p-2 sm:p-4">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center space-x-3 bg-muted rounded-3xl p-3 shadow-sm">
+            <div className="flex items-center space-x-2 sm:space-x-3 bg-muted rounded-3xl p-2 sm:p-3 shadow-sm">
               {/* Agent Selector */}
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${selectedAgentData?.color} hover:bg-background/50 flex items-center gap-1`}
+                  className={`rounded-full px-2 sm:px-3 py-1 text-xs font-medium ${selectedAgentData?.color} hover:bg-background/50 flex items-center gap-1`}
                 >
                   {selectedAgentData && <selectedAgentData.icon className="h-3 w-3" />}
                   {selectedAgentData?.name}
@@ -179,7 +179,7 @@ export default function AgentsPage() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Ask anything..."
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-xs sm:text-sm"
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               />
 
@@ -188,7 +188,7 @@ export default function AgentsPage() {
                 onClick={handleVoiceRecord}
                 variant="ghost"
                 size="sm"
-                className={`rounded-full p-2 h-9 w-9 ${isRecording ? "bg-red-500 text-white animate-pulse" : "hover:bg-background/50"}`}
+                className={`rounded-full p-1 sm:p-2 h-8 w-8 sm:h-9 sm:w-9 ${isRecording ? "bg-red-500 text-white animate-pulse" : "hover:bg-background/50"}`}
               >
                 <Mic className="h-4 w-4" />
               </Button>
@@ -198,7 +198,7 @@ export default function AgentsPage() {
                 onClick={handleSendMessage}
                 disabled={!message.trim() || isLoading}
                 size="sm"
-                className="rounded-full p-2 h-9 w-9 bg-primary hover:bg-primary/90"
+                className="rounded-full p-1 sm:p-2 h-8 w-8 sm:h-9 sm:w-9 bg-primary hover:bg-primary/90"
               >
                 <Send className="h-4 w-4" />
               </Button>

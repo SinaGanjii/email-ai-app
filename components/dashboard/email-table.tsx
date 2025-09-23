@@ -123,39 +123,42 @@ export function EmailTable() {
 
   return (
     <div className="flex flex-col h-full w-full max-w-full overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-border min-w-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Checkbox checked={selectedEmails.length === emails.length} onCheckedChange={toggleAllEmails} />
-            <Button variant="ghost" size="sm">
-              <RefreshCw className="h-4 w-4" />
+      <div className="flex items-center justify-between p-2 sm:p-4 border-b border-border min-w-0">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Checkbox checked={selectedEmails.length === emails.length} onCheckedChange={toggleAllEmails} className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="p-1 sm:p-2">
+              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
-              <MoreVertical className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="p-1 sm:p-2">
+              <MoreVertical className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
 
           {selectedEmails.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setArchiveModalOpen(true)}>
-                <Archive className="h-4 w-4" />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setArchiveModalOpen(true)} className="p-1 sm:p-2">
+                <Archive className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeleteModalOpen(true)}>
-                <Trash2 className="h-4 w-4" />
+              <Button size="sm" variant="ghost" onClick={() => setDeleteModalOpen(true)} className="p-1 sm:p-2">
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>
+        <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+          <span className="hidden sm:inline">
             1-{emails.length} of {emails.length}
           </span>
-          <Button variant="ghost" size="sm" disabled>
-            <ChevronLeft className="h-4 w-4" />
+          <span className="sm:hidden">
+            {emails.length}
+          </span>
+          <Button variant="ghost" size="sm" disabled className="p-1 sm:p-2">
+            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
-          <Button variant="ghost" size="sm" disabled>
-            <ChevronRight className="h-4 w-4" />
+          <Button variant="ghost" size="sm" disabled className="p-1 sm:p-2">
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
         </div>
       </div>
@@ -165,22 +168,23 @@ export function EmailTable() {
           {emails.map((email) => (
             <div
               key={email.id}
-              className={`flex items-center px-4 py-2 cursor-pointer hover:shadow-sm transition-all duration-150 min-w-0 ${
+              className={`flex items-center px-2 sm:px-4 py-2 cursor-pointer hover:shadow-sm transition-all duration-150 min-w-0 ${
                 email.status === "unread" ? "bg-background font-medium" : "bg-background/50"
               } ${hoveredEmail === email.id ? "shadow-sm" : ""}`}
               onMouseEnter={() => setHoveredEmail(email.id)}
               onMouseLeave={() => setHoveredEmail(null)}
               style={{ height: "40px" }} // Fixed Gmail-style row height
             >
-              <div className="flex items-center gap-2 w-14 flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 w-12 sm:w-14 flex-shrink-0">
                 <Checkbox
                   checked={selectedEmails.includes(email.id)}
                   onCheckedChange={() => toggleEmailSelection(email.id)}
+                  className="h-4 w-4"
                 />
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-5 w-5 p-0"
+                  className="h-4 w-4 sm:h-5 sm:w-5 p-0"
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleStar(email.id)
@@ -192,24 +196,24 @@ export function EmailTable() {
                 </Button>
               </div>
 
-              <div className="w-40 sm:w-48 flex-shrink-0 min-w-0">
+              <div className="w-24 sm:w-40 md:w-48 flex-shrink-0 min-w-0">
                 <span
-                  className={`text-sm truncate block ${email.status === "unread" ? "font-semibold text-foreground" : "text-foreground"}`}
+                  className={`text-xs sm:text-sm truncate block ${email.status === "unread" ? "font-semibold text-foreground" : "text-foreground"}`}
                 >
                   {email.sender}
                 </span>
               </div>
 
-              <div className="flex-1 min-w-0 px-2 sm:px-4 relative">
+              <div className="flex-1 min-w-0 px-1 sm:px-2 md:px-4 relative">
                 <div className="flex items-center justify-between w-full">
-                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                  <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
                     <p
-                      className={`text-sm truncate ${email.status === "unread" ? "font-semibold text-foreground" : "font-medium text-foreground"}`}
+                      className={`text-xs sm:text-sm truncate ${email.status === "unread" ? "font-semibold text-foreground" : "font-medium text-foreground"}`}
                     >
                       {email.subject}
                     </p>
-                    <span className="text-xs text-muted-foreground">-</span>
-                    <p className="text-xs text-muted-foreground truncate flex-1">
+                    <span className="text-xs text-muted-foreground hidden sm:inline">-</span>
+                    <p className="text-xs text-muted-foreground truncate flex-1 hidden md:block">
                       {email.preview}
                     </p>
                   </div>

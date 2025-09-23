@@ -39,6 +39,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [overlayAnimating, setOverlayAnimating] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const enterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -102,9 +103,9 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   }
 
-  // --- Hover handlers with Gmail-like delays ---
+  // --- Hover handlers with Gmail-like delays (desktop only) ---
   const handleEnter = () => {
-    if (!sidebarOpen && !isNavigating) {
+    if (!sidebarOpen && !isNavigating && window.innerWidth >= 768) {
       if (leaveTimeoutRef.current) {
         clearTimeout(leaveTimeoutRef.current)
         leaveTimeoutRef.current = null
@@ -121,7 +122,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   const handleLeave = () => {
-    if (!sidebarOpen && !isNavigating) {
+    if (!sidebarOpen && !isNavigating && window.innerWidth >= 768) {
       if (enterTimeoutRef.current) {
         clearTimeout(enterTimeoutRef.current)
         enterTimeoutRef.current = null
@@ -139,7 +140,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   const handleNavigationClick = () => {
-    if (!sidebarOpen) {
+    // Close mobile menu on navigation
+    setMobileMenuOpen(false)
+    
+    if (!sidebarOpen && window.innerWidth >= 768) {
       setIsNavigating(true) // freeze sidebar until navigation is done
       if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
       if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current)
@@ -229,41 +233,56 @@ export function MainLayout({ children }: MainLayoutProps) {
     <div className="h-screen bg-background w-full overflow-hidden flex flex-col">
       {/* Header */}
       <header className="bg-card border-b border-border w-full flex-shrink-0">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3">
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setMobileMenuOpen(!mobileMenuOpen)
+                } else {
+                  setSidebarOpen(!sidebarOpen)
+                }
+              }}
+              className="p-1 sm:p-2"
             >
               <Menu className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2">
-              <Mail className="h-6 w-6 text-primary" />
-              <h1 className="text-lg sm:text-xl font-semibold text-foreground">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+              <h1 className="text-base sm:text-lg md:text-xl font-semibold text-foreground">
                 EmailAI
               </h1>
             </div>
           </div>
-          <div className="flex-1 max-w-md sm:max-w-2xl mx-2 sm:mx-8">
+          <div className="flex-1 max-w-xs sm:max-w-md md:max-w-2xl mx-1 sm:mx-2 md:mx-8">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-2 sm:left-3 top-1/2 h-3 w-3 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search mail"
-                className="w-full rounded-full bg-input px-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full rounded-full bg-input px-6 sm:px-10 py-1.5 sm:py-2 text-xs sm:text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="p-1 sm:p-2">
             <User className="h-4 w-4" />
           </Button>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Hover overlay */}
-        {!sidebarOpen && overlayVisible && (
+        {/* Mobile menu overlay */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
+        {/* Hover overlay (desktop only) */}
+        {!sidebarOpen && overlayVisible && window.innerWidth >= 768 && (
           <div
             className={cn(
               "absolute top-0 left-0 w-64 h-full bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 z-50 shadow-lg rounded-r-xl transition-all duration-300 ease-in-out",
@@ -296,10 +315,10 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         )}
 
-        {/* Sidebar (hitbox wide) */}
+        {/* Sidebar (desktop) */}
         <aside
           className={cn(
-            "bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/60 transition-all duration-300 shadow-sm relative h-full",
+            "bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/60 transition-all duration-300 shadow-sm relative h-full hidden md:block",
             sidebarOpen ? "w-64" : "w-20"
           )}
           onMouseEnter={handleEnter}
@@ -327,6 +346,36 @@ export function MainLayout({ children }: MainLayoutProps) {
                 )}
                 {aiNavigation.map((item) => (
                   <NavigationItem key={item.name} item={item} />
+                ))}
+              </div>
+            </nav>
+          </div>
+        </aside>
+
+        {/* Mobile sidebar drawer */}
+        <aside
+          className={cn(
+            "fixed top-0 left-0 h-full w-64 bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden",
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
+          <div className="p-4">
+            <Button
+              className="w-full justify-start gap-2 mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg"
+            >
+              <Pencil className="h-4 w-4" />
+              Compose
+            </Button>
+            <nav className="space-y-1">
+              {navigation.map((item) => (
+                <NavigationItem key={item.name} item={item} isOverlay />
+              ))}
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <p className="text-xs font-medium text-gray-500 mb-2 px-3">
+                  AI TOOLS
+                </p>
+                {aiNavigation.map((item) => (
+                  <NavigationItem key={item.name} item={item} isOverlay />
                 ))}
               </div>
             </nav>
