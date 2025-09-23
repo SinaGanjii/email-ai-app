@@ -24,9 +24,9 @@ const archivedEmails = [
 export default function ArchivePage() {
   return (
     <MainLayout>
-      <div className="flex-1 flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 flex flex-col h-full w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 min-w-0">
         <div className="flex items-center gap-4">
           <Checkbox />
           <Button variant="ghost" size="sm">
@@ -42,7 +42,7 @@ export default function ArchivePage() {
       </div>
 
       {/* Email List */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto w-full">
         {archivedEmails.map((email) => (
           <div
             key={email.id}

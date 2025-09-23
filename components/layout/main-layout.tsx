@@ -28,20 +28,20 @@ export function MainLayout({ children }: MainLayoutProps) {
   const aiNavigation = [{ name: "AI Agents", href: "/agents", icon: MessageSquare }]
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background w-full overflow-hidden">
+      <header className="bg-card border-b border-border w-full">
+        <div className="flex items-center justify-between px-4 py-3 w-full max-w-full">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
               <Mail className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-semibold text-foreground">EmailAI</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-foreground">EmailAI</h1>
             </div>
           </div>
 
-          <div className="flex-1 max-w-2xl mx-8">
+          <div className="flex-1 max-w-md sm:max-w-2xl mx-2 sm:mx-8 min-w-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -52,7 +52,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button variant="ghost" size="sm">
               <User className="h-4 w-4" />
             </Button>
@@ -60,9 +60,9 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex w-full overflow-hidden">
         <aside
-          className={cn("bg-card border-r border-border transition-all duration-300", sidebarOpen ? "w-64" : "w-16")}
+          className={cn("bg-card border-r border-border transition-all duration-300 flex-shrink-0", sidebarOpen ? "w-64" : "w-16")}
         >
           <div className="p-4">
             <Button className="w-full justify-start gap-2 mb-6">
@@ -118,7 +118,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 min-w-0 overflow-hidden">{children}</main>
       </div>
     </div>
   )

@@ -32,8 +32,7 @@ const mockEmails: Email[] = [
   {
     id: "1",
     sender: "John Smith",
-    subject:
-      "Q4 Budget Review Meeting - Hi team, I'd like to schedule a meeting to review our Q4 budget and discuss upcoming projects",
+    subject: "Q4 Budget Review Meeting",
     time: "2:30 PM",
     status: "unread",
     preview:
@@ -43,7 +42,7 @@ const mockEmails: Email[] = [
   {
     id: "2",
     sender: "Sarah Marketing",
-    subject: "New Campaign Launch - The new campaign is ready to launch and I wanted to share the final details",
+    subject: "New Campaign Launch",
     time: "1:15 PM",
     status: "read",
     preview: "The new campaign is ready to launch and I wanted to share the final details with everyone on the team.",
@@ -52,8 +51,7 @@ const mockEmails: Email[] = [
   {
     id: "3",
     sender: "Mom",
-    subject:
-      "Weekend Plans - Hey honey, what are your plans for this weekend because we were thinking of having a family barbecue",
+    subject: "Weekend Plans",
     time: "12:45 PM",
     status: "read",
     preview: "Hey honey, what are your plans for this weekend because we were thinking of having a family barbecue.",
@@ -62,8 +60,7 @@ const mockEmails: Email[] = [
   {
     id: "4",
     sender: "Store Deals",
-    subject:
-      "50% Off Everything - Limited Time! - Don't miss out on our biggest sale of the year with incredible discounts",
+    subject: "50% Off Everything - Limited Time!",
     time: "11:30 AM",
     status: "unread",
     preview: "Don't miss out on our biggest sale of the year with incredible discounts on all your favorite items.",
@@ -72,7 +69,7 @@ const mockEmails: Email[] = [
   {
     id: "5",
     sender: "Project Team",
-    subject: "Project Milestone Completed - Great news everyone, we've successfully completed the first milestone",
+    subject: "Project Milestone Completed",
     time: "10:20 AM",
     status: "important",
     preview:
@@ -125,8 +122,8 @@ export function EmailTable() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b border-border">
+    <div className="flex flex-col h-full w-full max-w-full overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-border min-w-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Checkbox checked={selectedEmails.length === emails.length} onCheckedChange={toggleAllEmails} />
@@ -163,19 +160,19 @@ export function EmailTable() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        <div className="divide-y divide-border">
+      <div className="flex-1 overflow-auto w-full">
+        <div className="divide-y divide-border min-w-0">
           {emails.map((email) => (
             <div
               key={email.id}
-              className={`flex items-center px-4 py-2 cursor-pointer hover:shadow-sm transition-all duration-150 ${
+              className={`flex items-center px-4 py-2 cursor-pointer hover:shadow-sm transition-all duration-150 min-w-0 ${
                 email.status === "unread" ? "bg-background font-medium" : "bg-background/50"
               } ${hoveredEmail === email.id ? "shadow-sm" : ""}`}
               onMouseEnter={() => setHoveredEmail(email.id)}
               onMouseLeave={() => setHoveredEmail(null)}
               style={{ height: "40px" }} // Fixed Gmail-style row height
             >
-              <div className="flex items-center gap-3 w-16">
+              <div className="flex items-center gap-2 w-14 flex-shrink-0">
                 <Checkbox
                   checked={selectedEmails.includes(email.id)}
                   onCheckedChange={() => toggleEmailSelection(email.id)}
@@ -183,101 +180,108 @@ export function EmailTable() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
+                  className="h-5 w-5 p-0"
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleStar(email.id)
                   }}
                 >
                   <Star
-                    className={`h-4 w-4 ${email.starred ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`}
+                    className={`h-3 w-3 ${email.starred ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`}
                   />
                 </Button>
               </div>
 
-              <div className="w-48 flex-shrink-0">
+              <div className="w-40 sm:w-48 flex-shrink-0 min-w-0">
                 <span
-                  className={`text-sm truncate ${email.status === "unread" ? "font-semibold text-foreground" : "text-foreground"}`}
+                  className={`text-sm truncate block ${email.status === "unread" ? "font-semibold text-foreground" : "text-foreground"}`}
                 >
                   {email.sender}
                 </span>
               </div>
 
-              <div className="flex-1 min-w-0 px-4">
-                <p
-                  className={`text-sm truncate ${email.status === "unread" ? "font-medium text-foreground" : "text-muted-foreground"}`}
-                >
-                  {email.subject}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 w-32 justify-end">
-                {hoveredEmail === email.id ? (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 hover:bg-purple-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAgentAction(email.id, "cleanup")
-                      }}
-                      title="Cleanup Agent"
+              <div className="flex-1 min-w-0 px-2 sm:px-4 relative">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <p
+                      className={`text-sm truncate ${email.status === "unread" ? "font-semibold text-foreground" : "font-medium text-foreground"}`}
                     >
-                      <Sparkles className="h-3 w-3 text-purple-500" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 hover:bg-blue-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAgentAction(email.id, "smart-reply")
-                      }}
-                      title="Smart Reply Agent"
-                    >
-                      <MessageSquare className="h-3 w-3 text-blue-500" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 hover:bg-green-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAgentAction(email.id, "summary")
-                      }}
-                      title="Summary Agent"
-                    >
-                      <FileText className="h-3 w-3 text-green-500" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 hover:bg-orange-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleArchiveEmail(email.id)
-                      }}
-                      title="Archive"
-                    >
-                      <Archive className="h-3 w-3 text-orange-500" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 hover:bg-red-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteEmail(email.id)
-                      }}
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3 w-3 text-red-500" />
-                    </Button>
+                      {email.subject}
+                    </p>
+                    <span className="text-xs text-muted-foreground">-</span>
+                    <p className="text-xs text-muted-foreground truncate flex-1">
+                      {email.preview}
+                    </p>
                   </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground">{email.time}</span>
-                )}
+                  <div className="flex items-center gap-2 ml-2">
+                    {hoveredEmail === email.id ? (
+                      <div className="flex items-center gap-1 animate-in fade-in-0 duration-200">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 hover:bg-purple-500/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleAgentAction(email.id, "cleanup")
+                          }}
+                          title="Cleanup Agent"
+                        >
+                          <Sparkles className="h-3 w-3 text-purple-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 hover:bg-blue-500/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleAgentAction(email.id, "smart-reply")
+                          }}
+                          title="Smart Reply Agent"
+                        >
+                          <MessageSquare className="h-3 w-3 text-blue-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 hover:bg-green-500/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleAgentAction(email.id, "summary")
+                          }}
+                          title="Summary Agent"
+                        >
+                          <FileText className="h-3 w-3 text-green-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 hover:bg-orange-500/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleArchiveEmail(email.id)
+                          }}
+                          title="Archive"
+                        >
+                          <Archive className="h-3 w-3 text-orange-500" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 w-5 p-0 hover:bg-red-500/10 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteEmail(email.id)
+                          }}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3 w-3 text-red-500" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground flex-shrink-0">{email.time}</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
