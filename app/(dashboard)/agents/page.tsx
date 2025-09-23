@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { MainLayout } from "@/components/layout/main-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, ChevronDown, Mic, Sparkles, Book as Broom, Reply, FileText } from "lucide-react"
@@ -71,8 +70,7 @@ export default function AgentsPage() {
   const selectedAgentData = agents.find((a) => a.id === selectedAgent)
 
   return (
-    <MainLayout>
-      <div className="h-[calc(100vh-8rem)] flex flex-col bg-background">
+    <div className="h-[calc(100vh-8rem)] flex flex-col bg-background">
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.length === 0 ? (
@@ -208,6 +206,5 @@ export default function AgentsPage() {
           </div>
         </div>
       </div>
-    </MainLayout>
   )
 }

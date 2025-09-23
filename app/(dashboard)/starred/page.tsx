@@ -4,7 +4,6 @@ import { useState } from "react"
 import { MoreVertical, Archive, Delete, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { MainLayout } from "@/components/layout/main-layout"
 
 const starredEmails = [
   {
@@ -37,8 +36,7 @@ export default function StarredPage() {
   const [selectedEmails, setSelectedEmails] = useState<number[]>([])
 
   return (
-    <MainLayout>
-      <div className="flex-1 flex flex-col h-full w-full max-w-full overflow-hidden">
+    <div className="flex-1 flex flex-col h-full w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 min-w-0">
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
@@ -94,6 +92,5 @@ export default function StarredPage() {
         ))}
       </div>
       </div>
-    </MainLayout>
   )
 }

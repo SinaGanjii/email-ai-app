@@ -3,20 +3,217 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, Mail, MessageSquare, User, Search, Inbox, Star, Clock, Send, Archive, Trash2, Plus } from "lucide-react"
+import {
+  Menu,
+  Mail,
+  MessageSquare,
+  User,
+  Search,
+  Inbox,
+  Star,
+  Clock,
+  Send,
+  Archive,
+  Trash2,
+  Pencil,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface MainLayoutProps {
   children: React.ReactNode
 }
 
+interface NavigationItem {
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  count?: number
+}
+
 export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarHovered, setSidebarHovered] = useState(false)
+  const [overlayVisible, setOverlayVisible] = useState(false)
+  const [overlayAnimating, setOverlayAnimating] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const pathname = usePathname()
+  const enterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const previousPathnameRef = useRef<string>(pathname)
 
-  const navigation = [
+  // --- Initialize sidebar state from localStorage ---
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-open")
+    if (saved !== null) {
+      setSidebarOpen(JSON.parse(saved))
+    }
+    setIsInitialized(true)
+  }, [])
+
+  // --- Save state to localStorage ---
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem("sidebar-open", JSON.stringify(sidebarOpen))
+    }
+  }, [sidebarOpen, isInitialized])
+
+  // --- Reset overlay when fully open ---
+  useEffect(() => {
+    if (sidebarOpen) {
+      resetOverlay()
+    }
+  }, [sidebarOpen])
+
+  // --- When pathname changes, reset navigation freeze ---
+  useEffect(() => {
+    if (pathname !== previousPathnameRef.current) {
+      previousPathnameRef.current = pathname
+      
+      if (isNavigating) {
+        // Only reset isNavigating flag, don't interfere with overlay state
+        setIsNavigating(false)
+      }
+    }
+  }, [pathname, isNavigating])
+
+  // --- Cleanup timers on unmount ---
+  useEffect(() => {
+    return () => {
+      if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
+      if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current)
+    }
+  }, [])
+
+  const resetOverlay = () => {
+    setSidebarHovered(false)
+    setOverlayVisible(false)
+    setOverlayAnimating(false)
+
+    if (enterTimeoutRef.current) {
+      clearTimeout(enterTimeoutRef.current)
+      enterTimeoutRef.current = null
+    }
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current)
+      leaveTimeoutRef.current = null
+    }
+  }
+
+  // --- Hover handlers with Gmail-like delays ---
+  const handleEnter = () => {
+    if (!sidebarOpen && !isNavigating) {
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current)
+        leaveTimeoutRef.current = null
+      }
+      if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
+
+      enterTimeoutRef.current = setTimeout(() => {
+        setSidebarHovered(true)
+        setOverlayVisible(true)
+        setOverlayAnimating(false)
+        enterTimeoutRef.current = null
+      }, 250) // Gmail-like delay
+    }
+  }
+
+  const handleLeave = () => {
+    if (!sidebarOpen && !isNavigating) {
+      if (enterTimeoutRef.current) {
+        clearTimeout(enterTimeoutRef.current)
+        enterTimeoutRef.current = null
+      }
+      if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current)
+
+      leaveTimeoutRef.current = setTimeout(() => {
+        setOverlayAnimating(true)
+        setTimeout(() => {
+          resetOverlay()
+        }, 300) // Animation duration
+        leaveTimeoutRef.current = null
+      }, 400) // Gmail-like delay
+    }
+  }
+
+  const handleNavigationClick = () => {
+    if (!sidebarOpen) {
+      setIsNavigating(true) // freeze sidebar until navigation is done
+      if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
+      if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current)
+
+      // Only show overlay if not already visible to prevent flicker
+      if (!overlayVisible) {
+        setSidebarHovered(true)
+        setOverlayVisible(true)
+        setOverlayAnimating(false)
+      }
+    }
+    // If sidebar is open, don't interfere with navigation
+  }
+
+  // --- NavigationItem reusable ---
+  const NavigationItem = ({
+    item,
+    isOverlay = false,
+  }: {
+    item: NavigationItem
+    isOverlay?: boolean
+  }) => {
+    const Icon = item.icon
+    const isActive = pathname === item.href
+
+    return (
+      <Link key={item.name} href={item.href} onClick={handleNavigationClick}>
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full gap-3 h-10 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 group rounded-lg",
+            isOverlay
+              ? "justify-start"
+              : sidebarOpen
+              ? "justify-start"
+              : "justify-center px-2",
+            isActive &&
+              "bg-gray-200/90 text-gray-900 border-l-2 border-gray-400"
+          )}
+        >
+          <Icon
+            className={cn(
+              "h-4 w-4 transition-colors duration-300",
+              isActive
+                ? "text-gray-700"
+                : "text-gray-500 group-hover:text-gray-700"
+            )}
+          />
+          {(isOverlay || sidebarOpen) && (
+            <>
+              <span
+                className={cn(
+                  "text-sm flex-1 text-left transition-colors duration-300",
+                  isActive
+                    ? "text-gray-900 font-medium"
+                    : "text-gray-600 group-hover:text-gray-900"
+                )}
+              >
+                {item.name}
+              </span>
+              {item.count && (
+                <span className="text-xs bg-gray-300/80 text-gray-700 px-2 py-0.5 rounded-full">
+                  {item.count}
+                </span>
+              )}
+            </>
+          )}
+        </Button>
+      </Link>
+    )
+  }
+
+  // --- Navigation data ---
+  const navigation: NavigationItem[] = [
     { name: "Inbox", href: "/dashboard", icon: Inbox, count: 23 },
     { name: "Starred", href: "/starred", icon: Star },
     { name: "Snoozed", href: "/snoozed", icon: Clock },
@@ -24,100 +221,118 @@ export function MainLayout({ children }: MainLayoutProps) {
     { name: "Archive", href: "/archive", icon: Archive },
     { name: "Trash", href: "/trash", icon: Trash2 },
   ]
-
-  const aiNavigation = [{ name: "AI Agents", href: "/agents", icon: MessageSquare }]
+  const aiNavigation: NavigationItem[] = [
+    { name: "AI Agents", href: "/agents", icon: MessageSquare },
+  ]
 
   return (
-    <div className="min-h-screen bg-background w-full overflow-hidden">
-      <header className="bg-card border-b border-border w-full">
-        <div className="flex items-center justify-between px-4 py-3 w-full max-w-full">
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
+    <div className="h-screen bg-background w-full overflow-hidden flex flex-col">
+      {/* Header */}
+      <header className="bg-card border-b border-border w-full flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
               <Menu className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
               <Mail className="h-6 w-6 text-primary" />
-              <h1 className="text-lg sm:text-xl font-semibold text-foreground">EmailAI</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-foreground">
+                EmailAI
+              </h1>
             </div>
           </div>
-
-          <div className="flex-1 max-w-md sm:max-w-2xl mx-2 sm:mx-8 min-w-0">
+          <div className="flex-1 max-w-md sm:max-w-2xl mx-2 sm:mx-8">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search mail"
-                className="w-full rounded-full bg-input px-10 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full rounded-full bg-input px-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="ghost" size="sm">
-              <User className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm">
+            <User className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 
-      <div className="flex w-full overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Hover overlay */}
+        {!sidebarOpen && overlayVisible && (
+          <div
+            className={cn(
+              "absolute top-0 left-0 w-64 h-full bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 z-50 shadow-lg rounded-r-xl transition-all duration-300 ease-in-out",
+              overlayAnimating
+                ? "opacity-0 -translate-x-2"
+                : "opacity-100 translate-x-0"
+            )}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          >
+            <div className="p-4">
+              <Button className="w-full justify-start gap-2 mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg">
+                <Pencil className="h-4 w-4" />
+                Compose
+              </Button>
+              <nav className="space-y-1">
+                {navigation.map((item) => (
+                  <NavigationItem key={item.name} item={item} isOverlay />
+                ))}
+                <div className="pt-4 mt-4 border-t border-gray-200">
+                  <p className="text-xs font-medium text-gray-500 mb-2 px-3">
+                    AI TOOLS
+                  </p>
+                  {aiNavigation.map((item) => (
+                    <NavigationItem key={item.name} item={item} isOverlay />
+                  ))}
+                </div>
+              </nav>
+            </div>
+          </div>
+        )}
+
+        {/* Sidebar (hitbox wide) */}
         <aside
-          className={cn("bg-card border-r border-border transition-all duration-300 flex-shrink-0", sidebarOpen ? "w-64" : "w-16")}
+          className={cn(
+            "bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/60 transition-all duration-300 shadow-sm relative h-full",
+            sidebarOpen ? "w-64" : "w-20"
+          )}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
         >
           <div className="p-4">
-            <Button className="w-full justify-start gap-2 mb-6">
-              <Plus className="h-4 w-4" />
+            <Button
+              className={cn(
+                "w-full gap-2 mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg transition-all duration-300",
+                sidebarOpen ? "justify-start" : "justify-center px-2"
+              )}
+            >
+              <Pencil className="h-4 w-4" />
               {sidebarOpen && "Compose"}
             </Button>
-
             <nav className="space-y-1">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link key={item.name} href={item.href}>
-                    <Button
-                      variant={isActive ? "secondary" : "ghost"}
-                      className={cn("w-full justify-start gap-3 h-8", !sidebarOpen && "justify-center px-2")}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {sidebarOpen && (
-                        <>
-                          <span className="text-sm flex-1 text-left">{item.name}</span>
-                          {item.count && (
-                            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                              {item.count}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </Button>
-                  </Link>
-                )
-              })}
-
-              {sidebarOpen && (
-                <div className="pt-4 mt-4 border-t border-border">
-                  <p className="text-xs font-medium text-muted-foreground mb-2 px-3">AI TOOLS</p>
-                  {aiNavigation.map((item) => {
-                    const Icon = item.icon
-                    const isActive = pathname === item.href
-                    return (
-                      <Link key={item.name} href={item.href}>
-                        <Button variant={isActive ? "secondary" : "ghost"} className="w-full justify-start gap-3 h-8">
-                          <Icon className="h-4 w-4" />
-                          <span className="text-sm">{item.name}</span>
-                        </Button>
-                      </Link>
-                    )
-                  })}
-                </div>
-              )}
+              {navigation.map((item) => (
+                <NavigationItem key={item.name} item={item} />
+              ))}
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                {sidebarOpen && (
+                  <p className="text-xs font-medium text-gray-500 mb-2 px-3">
+                    AI TOOLS
+                  </p>
+                )}
+                {aiNavigation.map((item) => (
+                  <NavigationItem key={item.name} item={item} />
+                ))}
+              </div>
             </nav>
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 min-w-0 overflow-hidden">{children}</main>
       </div>
     </div>
