@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { GoogleLoginButton } from "@/components/auth/GoogleLoginButton"
 import { Eye, EyeOff } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
+import { AuthGuard } from "@/components/auth/AuthGuard"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -24,30 +26,35 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Simulate login process
-      console.log("Login attempt:", { email, password })
+      // Utiliser Supabase pour l'authentification
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-      // For demo purposes, accept any email/password combination
-      // In a real app, you would validate credentials here
-      if (email && password) {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) {
+        console.error("Login error:", error.message)
+        // Vous pouvez ajouter un toast ou un message d'erreur ici
+        alert(`Erreur de connexion: ${error.message}`)
+        return
+      }
 
-        // Store user session (in a real app, you'd use proper authentication)
-        localStorage.setItem("user", JSON.stringify({ email, loggedIn: true }))
-
-        // Redirect to dashboard
+      if (data.user) {
+        console.log("Login successful:", data.user.email)
+        // La redirection se fera automatiquement via AuthGuard
         router.push("/dashboard")
       }
     } catch (error) {
       console.error("Login error:", error)
+      alert("Une erreur est survenue lors de la connexion")
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
+    <AuthGuard requireAuth={false}>
+      <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -137,5 +144,6 @@ export default function LoginPage() {
         </div>
       </form>
     </AuthLayout>
+    </AuthGuard>
   )
 }

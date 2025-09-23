@@ -6,36 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { getCurrentUser, signOut, type CleanUser } from "@/lib/supabaseClient"
+import { useAuth } from "@/hooks/useAuth"
 import { User, Mail, LogOut, IdCard, Shield } from "lucide-react"
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<CleanUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, loading, signOut } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
   const router = useRouter()
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getCurrentUser()
-        setUser(userData)
-      } catch (error) {
-        console.error("Error fetching user:", error)
-        router.push("/auth/login")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUser()
-  }, [router])
 
   const handleSignOut = async () => {
     setSigningOut(true)
     try {
       await signOut()
-      router.push("/auth/login")
     } catch (error) {
       console.error("Error signing out:", error)
     } finally {

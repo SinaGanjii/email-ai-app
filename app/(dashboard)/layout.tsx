@@ -1,9 +1,14 @@
 import { MainLayout } from "@/components/layout/main-layout"
+import { AuthGuard } from "@/components/auth/AuthGuard"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return <MainLayout>{children}</MainLayout>
+  return (
+    <AuthGuard requireAuth={true}>
+      <MainLayout>{children}</MainLayout>
+    </AuthGuard>
+  )
 }

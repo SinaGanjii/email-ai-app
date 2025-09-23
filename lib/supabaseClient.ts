@@ -60,8 +60,11 @@ export async function getCurrentUser(): Promise<CleanUser | null> {
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error) {
-      console.error('Error getting current user:', error)
-      throw error
+      // Ne pas logger les erreurs de session manquante (cas normal)
+      if (error.message !== 'Auth session missing!') {
+        console.error('Error getting current user:', error)
+      }
+      return null
     }
 
     if (!user) {
@@ -81,8 +84,11 @@ export async function getCurrentUser(): Promise<CleanUser | null> {
     }
 
     return cleanUser
-  } catch (error) {
-    console.error('Get current user failed:', error)
-    throw error
+  } catch (error: any) {
+    // Ne pas logger les erreurs de session manquante (cas normal)
+    if (error?.message !== 'Auth session missing!') {
+      console.error('Get current user failed:', error)
+    }
+    return null
   }
 }
