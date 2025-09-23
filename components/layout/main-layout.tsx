@@ -18,6 +18,7 @@ import {
   Archive,
   Trash2,
   Pencil,
+  Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -174,7 +175,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         <Button
           variant="ghost"
           className={cn(
-            "w-full gap-3 h-10 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 group rounded-lg",
+            "w-full gap-2 h-8 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 group rounded-lg",
             isOverlay
               ? "justify-start"
               : sidebarOpen
@@ -196,7 +197,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <>
               <span
                 className={cn(
-                  "text-sm flex-1 text-left transition-colors duration-300",
+                  "text-xs flex-1 text-left transition-colors duration-300",
                   isActive
                     ? "text-gray-900 font-medium"
                     : "text-gray-600 group-hover:text-gray-900"
@@ -205,7 +206,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 {item.name}
               </span>
               {item.count && (
-                <span className="text-xs bg-gray-300/80 text-gray-700 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-gray-300/80 text-gray-700 px-1.5 py-0.5 rounded-full">
                   {item.count}
                 </span>
               )}
@@ -227,6 +228,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   ]
   const aiNavigation: NavigationItem[] = [
     { name: "AI Agents", href: "/agents", icon: MessageSquare },
+  ]
+  const profileNavigation: NavigationItem[] = [
+    { name: "Profile", href: "/profile", icon: User },
   ]
 
   return (
@@ -256,7 +260,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               </h1>
             </div>
           </div>
-          <div className="flex-1 max-w-xs sm:max-w-md md:max-w-2xl mx-1 sm:mx-2 md:mx-8">
+          <div className="flex-1 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-2 sm:mx-4 md:mx-6 lg:mx-8">
             <div className="relative">
               <Search className="absolute left-2 sm:left-3 top-1/2 h-3 w-3 sm:h-4 sm:w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -266,13 +270,10 @@ export function MainLayout({ children }: MainLayoutProps) {
               />
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="p-1 sm:p-2">
-            <User className="h-4 w-4" />
-          </Button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative min-h-0">
         {/* Mobile menu overlay */}
         {mobileMenuOpen && (
           <div
@@ -285,7 +286,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {!sidebarOpen && overlayVisible && window.innerWidth >= 768 && (
           <div
             className={cn(
-              "absolute top-0 left-0 w-64 h-full bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 z-50 shadow-lg rounded-r-xl transition-all duration-300 ease-in-out",
+              "absolute top-0 left-0 w-64 h-full bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 z-50 shadow-lg rounded-r-xl transition-all duration-300 ease-in-out flex-shrink-0",
               overlayAnimating
                 ? "opacity-0 -translate-x-2"
                 : "opacity-100 translate-x-0"
@@ -293,20 +294,28 @@ export function MainLayout({ children }: MainLayoutProps) {
             onMouseEnter={handleEnter}
             onMouseLeave={handleLeave}
           >
-            <div className="p-4">
-              <Button className="w-full justify-start gap-2 mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg">
+            <div className="p-3">
+              <Button className="w-full justify-start gap-2 mb-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg h-9">
                 <Pencil className="h-4 w-4" />
                 Compose
               </Button>
-              <nav className="space-y-1">
+              <nav className="space-y-0.5">
                 {navigation.map((item) => (
                   <NavigationItem key={item.name} item={item} isOverlay />
                 ))}
-                <div className="pt-4 mt-4 border-t border-gray-200">
-                  <p className="text-xs font-medium text-gray-500 mb-2 px-3">
+                <div className="pt-3 mt-3 border-t border-gray-200">
+                  <p className="text-xs font-medium text-gray-500 mb-1.5 px-3">
                     AI TOOLS
                   </p>
                   {aiNavigation.map((item) => (
+                    <NavigationItem key={item.name} item={item} isOverlay />
+                  ))}
+                </div>
+                <div className="pt-3 mt-3 border-t border-gray-200">
+                  <p className="text-xs font-medium text-gray-500 mb-1.5 px-3">
+                    ACCOUNT
+                  </p>
+                  {profileNavigation.map((item) => (
                     <NavigationItem key={item.name} item={item} isOverlay />
                   ))}
                 </div>
@@ -318,33 +327,43 @@ export function MainLayout({ children }: MainLayoutProps) {
         {/* Sidebar (desktop) */}
         <aside
           className={cn(
-            "bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/60 transition-all duration-300 shadow-sm relative h-full hidden md:block",
+            "bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/60 transition-all duration-300 shadow-sm relative h-full hidden md:block flex-shrink-0",
             sidebarOpen ? "w-64" : "w-20"
           )}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
         >
-          <div className="p-4">
+          <div className="p-3">
             <Button
               className={cn(
-                "w-full gap-2 mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg transition-all duration-300",
+                "w-full gap-2 mb-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg transition-all duration-300 h-9",
                 sidebarOpen ? "justify-start" : "justify-center px-2"
               )}
             >
               <Pencil className="h-4 w-4" />
               {sidebarOpen && "Compose"}
             </Button>
-            <nav className="space-y-1">
+            <nav className="space-y-0.5">
               {navigation.map((item) => (
                 <NavigationItem key={item.name} item={item} />
               ))}
-              <div className="pt-4 mt-4 border-t border-gray-200">
+              <div className="pt-3 mt-3 border-t border-gray-200">
                 {sidebarOpen && (
-                  <p className="text-xs font-medium text-gray-500 mb-2 px-3">
+                  <p className="text-xs font-medium text-gray-500 mb-1.5 px-3">
                     AI TOOLS
                   </p>
                 )}
                 {aiNavigation.map((item) => (
+                  <NavigationItem key={item.name} item={item} />
+                ))}
+              </div>
+              <div className="pt-3 mt-3 border-t border-gray-200">
+                {sidebarOpen && (
+                  <p className="text-xs font-medium text-gray-500 mb-1.5 px-3">
+                    ACCOUNT
+                  </p>
+                )}
+                {profileNavigation.map((item) => (
                   <NavigationItem key={item.name} item={item} />
                 ))}
               </div>
@@ -355,7 +374,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {/* Mobile sidebar drawer */}
         <aside
           className={cn(
-            "fixed top-0 left-0 h-full w-64 bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden",
+            "fixed top-0 left-0 h-full w-64 bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden flex-shrink-0",
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -378,11 +397,19 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <NavigationItem key={item.name} item={item} isOverlay />
                 ))}
               </div>
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <p className="text-xs font-medium text-gray-500 mb-2 px-3">
+                  ACCOUNT
+                </p>
+                {profileNavigation.map((item) => (
+                  <NavigationItem key={item.name} item={item} isOverlay />
+                ))}
+              </div>
             </nav>
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 overflow-hidden">{children}</main>
+        <main className="flex-1 min-w-0 overflow-hidden transition-all duration-300">{children}</main>
       </div>
     </div>
   )
