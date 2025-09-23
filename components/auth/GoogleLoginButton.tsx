@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button"
 import { signInWithGoogle } from "@/lib/supabaseClient"
 import { Chrome } from "lucide-react"
 
-export function GoogleLoginButton() {
+interface GoogleLoginButtonProps {
+  redirectTo?: string
+}
+
+export function GoogleLoginButton({ redirectTo = '/dashboard' }: GoogleLoginButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signInWithGoogle()
+      await signInWithGoogle(redirectTo)
     } catch (error) {
       console.error("Google sign-in failed:", error)
       // You could add a toast notification here for better UX

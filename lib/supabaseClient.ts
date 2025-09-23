@@ -1,10 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
-import type { AuthResponse, User, OAuthResponse } from '@supabase/supabase-js'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClientComponentClient()
 
 // Centralized redirect path - easy to change later
 export const DEFAULT_REDIRECT_PATH = '/dashboard'
@@ -18,12 +14,12 @@ export interface CleanUser {
   provider: string | null
 }
 
-export async function signInWithGoogle(): Promise<OAuthResponse> {
+export async function signInWithGoogle(redirectTo: string = DEFAULT_REDIRECT_PATH) {
   try {
     const response = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}${DEFAULT_REDIRECT_PATH}`
+        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`
       }
     })
 
