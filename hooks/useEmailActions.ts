@@ -73,6 +73,10 @@ export function useEmailActions() {
     return executeAction('mark_read', { emailIds }, options)
   }
 
+  const restoreEmails = async (emailIds: string[], options?: EmailActionOptions) => {
+    return executeAction('restore', { emailIds }, options)
+  }
+
   const sendEmail = async (emailData: {
     to: string
     subject: string
@@ -100,10 +104,6 @@ export function useEmailActions() {
     originalEmailId: string
   }, options?: EmailActionOptions) => {
     return executeAction('forward', { emailData }, options)
-  }
-
-  const restoreEmails = async (emailIds: string[], options?: EmailActionOptions) => {
-    return executeAction('restore', { emailIds }, options)
   }
 
   return {

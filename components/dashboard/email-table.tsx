@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ArrowLeft,
   Reply,
+  RotateCcw,
   ReplyAll,
   Forward,
   Printer,
@@ -57,10 +58,11 @@ interface EmailTableProps {
 export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProps = {}) {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { emails, loading, error: fetchError, refreshEmails, updateEmail, deleteEmail, deleteEmails, archiveEmails, starEmails, markAsRead } = useEmailCache()
-  const { deleteEmails: deleteEmailsAction, archiveEmails: archiveEmailsAction, starEmails: starEmailsAction, markAsRead: markAsReadAction, loading: actionLoading } = useEmailActions()
+  const { deleteEmails: deleteEmailsAction, archiveEmails: archiveEmailsAction, starEmails: starEmailsAction, markAsRead: markAsReadAction, restoreEmails: restoreEmailsAction, loading: actionLoading } = useEmailActions()
   const [selectedEmails, setSelectedEmails] = useState<string[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [archiveModalOpen, setArchiveModalOpen] = useState(false)
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false)
   const [hoveredEmail, setHoveredEmail] = useState<string | null>(null)
   const [selectedEmail, setSelectedEmail] = useState<SyncedEmail | null>(null)
 
@@ -196,6 +198,46 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
         refreshEmails()
       }
     })
+  }
+
+  const handleRestoreConfirm = async () => {
+    // Optimistic update - restore from trash
+    selectedEmails.forEach(emailId => {
+      updateEmail(emailId, { is_in_trash: false, is_deleted: false })
+    })
+    
+    // Real action
+    await restoreEmailsAction(selectedEmails, {
+      onSuccess: () => {
+        setSelectedEmails([])
+        setRestoreModalOpen(false)
+      },
+      onError: (error) => {
+        // Refresh emails to revert optimistic update
+        refreshEmails()
+      }
+    })
+  }
+
+  const handleRestoreEmail = async (emailId: string) => {
+    // Optimistic update - restore from trash
+    updateEmail(emailId, { is_in_trash: false, is_deleted: false })
+    
+    // Real action
+    try {
+      await restoreEmailsAction([emailId], {
+        onSuccess: (data) => {
+          // Email restored successfully
+        },
+        onError: (error) => {
+          // Refresh emails to revert optimistic update
+          refreshEmails()
+        }
+      })
+    } catch (error) {
+      // Refresh emails to revert optimistic update
+      refreshEmails()
+    }
   }
 
   const handleAgentAction = (emailId: string, agent: string) => {
@@ -413,12 +455,25 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
 
           {selectedEmails.length > 0 && (
             <div className="flex items-center gap-1 sm:gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setArchiveModalOpen(true)} className="p-1 sm:p-2">
-                <Archive className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeleteModalOpen(true)} className="p-1 sm:p-2">
-                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
+              {folder === 'trash' ? (
+                <>
+                  <Button size="sm" variant="ghost" onClick={() => setRestoreModalOpen(true)} className="p-1 sm:p-2">
+                    <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDeleteModalOpen(true)} className="p-1 sm:p-2">
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="ghost" onClick={() => setArchiveModalOpen(true)} className="p-1 sm:p-2">
+                    <Archive className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDeleteModalOpen(true)} className="p-1 sm:p-2">
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -497,66 +552,97 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
                   <div className="flex items-center gap-2 ml-2">
                     {hoveredEmail === email.id ? (
                       <div className="flex items-center gap-1 animate-in fade-in-0 duration-200">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-5 w-5 p-0 hover:bg-purple-500/10 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAgentAction(email.id, "cleanup")
-                          }}
-                          title="Cleanup Agent"
-                        >
-                          <Sparkles className="h-3 w-3 text-purple-500" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-5 w-5 p-0 hover:bg-blue-500/10 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAgentAction(email.id, "smart-reply")
-                          }}
-                          title="Smart Reply Agent"
-                        >
-                          <MessageSquare className="h-3 w-3 text-blue-500" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-5 w-5 p-0 hover:bg-green-500/10 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAgentAction(email.id, "summary")
-                          }}
-                          title="Summary Agent"
-                        >
-                          <FileText className="h-3 w-3 text-green-500" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-5 w-5 p-0 hover:bg-orange-500/10 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleArchiveEmail(email.id)
-                          }}
-                          title="Archive"
-                        >
-                          <Archive className="h-3 w-3 text-orange-500" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-5 w-5 p-0 hover:bg-red-500/10 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteEmail(email.id)
-                          }}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3 w-3 text-red-500" />
-                        </Button>
+                        {folder === 'trash' ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-green-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRestoreEmail(email.id)
+                              }}
+                              title="Restore to Inbox"
+                            >
+                              <RotateCcw className="h-3 w-3 text-green-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-red-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteEmail(email.id)
+                              }}
+                              title="Delete Forever"
+                            >
+                              <Trash2 className="h-3 w-3 text-red-500" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-purple-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAgentAction(email.id, "cleanup")
+                              }}
+                              title="Cleanup Agent"
+                            >
+                              <Sparkles className="h-3 w-3 text-purple-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-blue-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAgentAction(email.id, "smart-reply")
+                              }}
+                              title="Smart Reply Agent"
+                            >
+                              <MessageSquare className="h-3 w-3 text-blue-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-green-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAgentAction(email.id, "summary")
+                              }}
+                              title="Summary Agent"
+                            >
+                              <FileText className="h-3 w-3 text-green-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-orange-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleArchiveEmail(email.id)
+                              }}
+                              title="Archive"
+                            >
+                              <Archive className="h-3 w-3 text-orange-500" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-5 w-5 p-0 hover:bg-red-500/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteEmail(email.id)
+                              }}
+                              title="Delete"
+                            >
+                              <Trash2 className="h-3 w-3 text-red-500" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     ) : (
                       <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(email.sent_at || email.received_at)}</span>
@@ -572,14 +658,14 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Delete Emails"
+        title={folder === 'trash' ? "Delete Forever" : "Delete Emails"}
         footer={
           <>
             <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
+              {folder === 'trash' ? 'Delete Forever' : 'Delete'}
             </Button>
           </>
         }
@@ -588,9 +674,17 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
           <AlertTriangle className="h-5 w-5 text-destructive" />
           <div>
             <p className="text-foreground">
-              Are you sure you want to delete {selectedEmails.length} email{selectedEmails.length > 1 ? "s" : ""}?
+              {folder === 'trash' 
+                ? `Are you sure you want to permanently delete ${selectedEmails.length} email${selectedEmails.length > 1 ? "s" : ""}?`
+                : `Are you sure you want to delete ${selectedEmails.length} email${selectedEmails.length > 1 ? "s" : ""}?`
+              }
             </p>
-            <p className="text-sm text-muted-foreground mt-1">This action cannot be undone.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {folder === 'trash' 
+                ? "This will permanently remove the emails from your account."
+                : "This action cannot be undone."
+              }
+            </p>
           </div>
         </div>
       </Modal>
@@ -615,6 +709,32 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
               Archive {selectedEmails.length} email{selectedEmails.length > 1 ? "s" : ""}?
             </p>
             <p className="text-sm text-muted-foreground mt-1">You can find archived emails in your archive folder.</p>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={restoreModalOpen}
+        onClose={() => setRestoreModalOpen(false)}
+        title="Restore Emails"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setRestoreModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRestoreConfirm}>
+              Restore
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-center gap-3">
+          <RotateCcw className="h-5 w-5 text-green-500" />
+          <div>
+            <p className="text-foreground">
+              Restore {selectedEmails.length} email{selectedEmails.length > 1 ? "s" : ""} to inbox?
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">Emails will be moved back to your inbox.</p>
           </div>
         </div>
       </Modal>

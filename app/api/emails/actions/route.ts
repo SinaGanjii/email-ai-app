@@ -650,21 +650,20 @@ async function handleRestoreEmails(gmailClient: any, supabase: any, emailIds: st
     
     for (const emailId of emailIds) {
       // Get email details from database
-      const { data: email } = await supabase
+      const { data: email, error: emailError } = await supabase
         .from('messages')
-        .select('gmail_id, is_in_trash')
+        .select('is_in_trash')
         .eq('id', emailId)
         .single()
 
-      if (email?.gmail_id && email.is_in_trash) {
-        // Restore from trash in Gmail
-        await gmailClient.users.messages.untrash({
-          userId: 'me',
-          id: email.gmail_id
-        })
+      if (emailError) {
+        results.push({ emailId, success: false, error: `Database error: ${emailError.message}` })
+        continue
+      }
 
-        // Update database - restore from trash
-        await supabase
+      if (email && email.is_in_trash) {
+        // Update database only (no Gmail interaction)
+        const { error: updateError } = await supabase
           .from('messages')
           .update({ 
             is_in_trash: false, 
@@ -673,7 +672,11 @@ async function handleRestoreEmails(gmailClient: any, supabase: any, emailIds: st
           })
           .eq('id', emailId)
 
-        results.push({ emailId, success: true })
+        if (updateError) {
+          results.push({ emailId, success: false, error: `Database update failed: ${updateError.message}` })
+        } else {
+          results.push({ emailId, success: true })
+        }
       } else {
         results.push({ emailId, success: false, error: 'Email not found or not in trash' })
       }
