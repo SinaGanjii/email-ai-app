@@ -18,6 +18,12 @@ export interface GmailClient {
     id: string
     format?: 'full' | 'minimal' | 'metadata'
   }): Promise<any>
+  sendMessage(params: {
+    userId?: string
+    requestBody: {
+      raw: string
+    }
+  }): Promise<any>
 }
 
 export function createGmailClient(accessToken: string, refreshToken?: string): GmailClient {
@@ -69,6 +75,18 @@ export function createGmailClient(accessToken: string, refreshToken?: string): G
         userId,
         id,
         format
+      })
+    },
+
+    async sendMessage({ userId = 'me', requestBody }: {
+      userId?: string
+      requestBody: {
+        raw: string
+      }
+    }) {
+      return await gmail.users.messages.send({
+        userId,
+        requestBody
       })
     }
   }

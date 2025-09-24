@@ -248,6 +248,15 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     setSelectedEmail(email)
   }
 
+  const cleanHtmlContent = (html: string) => {
+    // Remove or replace cid: references that cause ERR_UNKNOWN_URL_SCHEME
+    return html
+      .replace(/src="cid:[^"]*"/g, 'src=""')
+      .replace(/src='cid:[^']*'/g, "src=''")
+      .replace(/<img[^>]*src="cid:[^"]*"[^>]*>/g, '<div class="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">[Image non disponible]</div>')
+      .replace(/<img[^>]*src='cid:[^']*'[^>]*>/g, '<div class="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">[Image non disponible]</div>')
+  }
+
   // Attendre que l'authentification soit vérifiée
   if (authLoading) {
     return (
@@ -396,7 +405,7 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
                 {selectedEmail.body_html ? (
                   <div 
                     className="email-content prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-a:text-blue-600 prose-strong:text-gray-900 prose-blockquote:text-gray-600 prose-img:rounded-lg prose-img:shadow-sm"
-                    dangerouslySetInnerHTML={{ __html: selectedEmail.body_html }}
+                    dangerouslySetInnerHTML={{ __html: cleanHtmlContent(selectedEmail.body_html) }}
                   />
                 ) : selectedEmail.body ? (
                   <div className="whitespace-pre-wrap">

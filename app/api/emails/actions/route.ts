@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Gmail client
+    console.log('🔧 Creating Gmail client with token:', providerToken ? 'present' : 'missing')
     const gmailClient = createGmailClient(providerToken, providerRefreshToken ?? undefined)
+    console.log('✅ Gmail client created:', gmailClient ? 'success' : 'failed')
 
     // Parse request body
     const { actionType, emailIds, emailData } = await request.json()
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
         return await handleMarkAsRead(gmailClient, supabase, emailIds)
       
       case 'send':
-        return await handleSendEmail(gmailClient, supabase, emailData)
+        return await handleSendEmail(gmailClient, supabase, emailData, session)
       
       case 'reply':
         return await handleReplyEmail(gmailClient, supabase, emailData)
@@ -379,13 +381,17 @@ async function handleMarkAsRead(gmailClient: any, supabase: any, emailIds: strin
   }
 }
 
-async function handleSendEmail(gmailClient: any, supabase: any, emailData: any) {
+async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, session: any) {
   try {
+    console.log('📧 Starting send email process with data:', emailData)
+    console.log('🔧 Gmail client in handleSendEmail:', gmailClient ? 'present' : 'undefined')
     const { to, subject, body, cc, bcc, replyTo } = emailData
 
     // Get user's email from Gmail profile
-    const profile = await gmailClient.users.getProfile({ userId: 'me' })
+    console.log('🔍 Getting Gmail profile...')
+    const profile = await gmailClient.getProfile()
     const userEmail = profile.data.emailAddress
+    console.log('✅ Got user email:', userEmail)
 
     // Create email message with proper headers
     const message = [
@@ -403,24 +409,28 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any) 
     ].filter(Boolean).join('\n')
 
     // Send email via Gmail API
-    const response = await gmailClient.users.messages.send({
+    console.log('📤 Sending email via Gmail API...')
+    const response = await gmailClient.sendMessage({
       userId: 'me',
       requestBody: {
         raw: Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
       }
     })
+    console.log('✅ Email sent successfully, Gmail ID:', response.data.id)
 
     // Get the sent message details from Gmail to sync properly
-    const sentMessage = await gmailClient.users.messages.get({
+    const sentMessage = await gmailClient.getMessage({
       userId: 'me',
       id: response.data.id,
       format: 'full'
     })
 
     // Store sent email in database with proper thread handling
-    const { data: sentEmail } = await supabase
+    console.log('💾 Saving email to database...')
+    const { data: sentEmail, error: dbError } = await supabase
       .from('messages')
       .insert({
+        user_id: session.user.id, // Add user_id for RLS
         gmail_id: response.data.id,
         gmail_message_id: response.data.id,
         from_email: userEmail,
@@ -438,6 +448,12 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any) 
       })
       .select()
       .single()
+
+    if (dbError) {
+      console.error('❌ Database error:', dbError)
+      throw new Error(`Database error: ${dbError.message}`)
+    }
+    console.log('✅ Email saved to database:', sentEmail?.id)
 
     // Add SENT label to the message
     await supabase
@@ -459,6 +475,7 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any) 
       gmailId: response.data.id
     })
   } catch (error: any) {
+    console.error('💥 Send email error:', error)
     return NextResponse.json({
       success: false,
       error: 'Send email failed',
