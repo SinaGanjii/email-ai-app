@@ -6,22 +6,13 @@ import { createGmailClient, validateGmailToken } from '@/lib/gmail'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 API /emails/actions called')
-    
     // Create Supabase client with proper auth handling
     const supabaseAuth = createRouteHandlerClient({ cookies })
     
     // Get session first
     const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession()
     
-    console.log('🔐 Session check:', { 
-      hasSession: !!session, 
-      sessionError: sessionError?.message,
-      userId: session?.user?.id 
-    })
-    
     if (sessionError || !session) {
-      console.error('❌ Authentication failed:', sessionError?.message)
       return NextResponse.json({ 
         success: false,
         error: 'Authentication required' 
@@ -54,20 +45,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Gmail client
-    console.log('🔧 Creating Gmail client with token:', providerToken ? 'present' : 'missing')
     const gmailClient = createGmailClient(providerToken, providerRefreshToken ?? undefined)
-    console.log('✅ Gmail client created:', gmailClient ? 'success' : 'failed')
 
     // Parse request body
     const { actionType, emailIds, emailData } = await request.json()
-    console.log('📥 Request data:', { actionType, emailIds, emailData })
 
     switch (actionType) {
       case 'delete':
-        console.log('🗑️ Calling handleDeleteEmails with:', emailIds)
-        const deleteResult = await handleDeleteEmails(gmailClient, supabase, emailIds)
-        console.log('🗑️ Delete result:', deleteResult)
-        return deleteResult
+        return await handleDeleteEmails(gmailClient, supabase, emailIds)
       
       case 'archive':
         return await handleArchiveEmails(gmailClient, supabase, emailIds)
@@ -383,15 +368,11 @@ async function handleMarkAsRead(gmailClient: any, supabase: any, emailIds: strin
 
 async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, session: any) {
   try {
-    console.log('📧 Starting send email process with data:', emailData)
-    console.log('🔧 Gmail client in handleSendEmail:', gmailClient ? 'present' : 'undefined')
     const { to, subject, body, cc, bcc, replyTo } = emailData
 
     // Get user's email from Gmail profile
-    console.log('🔍 Getting Gmail profile...')
     const profile = await gmailClient.getProfile()
     const userEmail = profile.data.emailAddress
-    console.log('✅ Got user email:', userEmail)
 
     // Create email message with proper headers
     const message = [
@@ -409,14 +390,12 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
     ].filter(Boolean).join('\n')
 
     // Send email via Gmail API
-    console.log('📤 Sending email via Gmail API...')
     const response = await gmailClient.sendMessage({
       userId: 'me',
       requestBody: {
         raw: Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
       }
     })
-    console.log('✅ Email sent successfully, Gmail ID:', response.data.id)
 
     // Get the sent message details from Gmail to sync properly
     const sentMessage = await gmailClient.getMessage({
@@ -426,7 +405,6 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
     })
 
     // Store sent email in database with proper thread handling
-    console.log('💾 Saving email to database...')
     const { data: sentEmail, error: dbError } = await supabase
       .from('messages')
       .insert({
@@ -450,10 +428,8 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
       .single()
 
     if (dbError) {
-      console.error('❌ Database error:', dbError)
       throw new Error(`Database error: ${dbError.message}`)
     }
-    console.log('✅ Email saved to database:', sentEmail?.id)
 
     // Add SENT label to the message
     await supabase
@@ -475,7 +451,6 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
       gmailId: response.data.id
     })
   } catch (error: any) {
-    console.error('💥 Send email error:', error)
     return NextResponse.json({
       success: false,
       error: 'Send email failed',

@@ -374,10 +374,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         >
           <div className="p-3">
             <Button
-              onClick={() => {
-                console.log('Compose button clicked, opening modal')
-                setComposeModalOpen(true)
-              }}
+              onClick={() => setComposeModalOpen(true)}
               className={cn(
                 "w-full gap-2 mb-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg transition-all duration-300 h-9",
                 sidebarOpen ? "justify-start" : "justify-center px-2"
