@@ -42,11 +42,19 @@ interface SyncedEmail {
   is_starred: boolean
   is_important: boolean
   is_sent: boolean
+  is_archived: boolean
+  is_deleted: boolean
+  is_in_trash: boolean
   sent_at: string | null
   received_at: string
 }
 
-export function EmailTable() {
+interface EmailTableProps {
+  folder?: 'inbox' | 'sent' | 'starred' | 'archive' | 'trash'
+  title?: string
+}
+
+export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProps = {}) {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { emails, loading, error: fetchError, refreshEmails, updateEmail, deleteEmail, deleteEmails, archiveEmails, starEmails, markAsRead } = useEmailCache()
   const { deleteEmails: deleteEmailsAction, archiveEmails: archiveEmailsAction, starEmails: starEmailsAction, markAsRead: markAsReadAction, loading: actionLoading } = useEmailActions()
@@ -55,6 +63,24 @@ export function EmailTable() {
   const [archiveModalOpen, setArchiveModalOpen] = useState(false)
   const [hoveredEmail, setHoveredEmail] = useState<string | null>(null)
   const [selectedEmail, setSelectedEmail] = useState<SyncedEmail | null>(null)
+
+  // Filtrer les emails selon le dossier
+  const filteredEmails = emails.filter(email => {
+    switch (folder) {
+      case 'inbox':
+        return !email.is_sent && !email.is_archived && !email.is_in_trash
+      case 'sent':
+        return email.is_sent && !email.is_in_trash
+      case 'starred':
+        return email.is_starred && !email.is_in_trash
+      case 'archive':
+        return email.is_archived && !email.is_in_trash
+      case 'trash':
+        return email.is_in_trash
+      default:
+        return !email.is_sent && !email.is_archived && !email.is_in_trash
+    }
+  })
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -80,12 +106,12 @@ export function EmailTable() {
   }
 
   const toggleAllEmails = () => {
-    setSelectedEmails(selectedEmails.length === emails.length ? [] : emails.map((email) => email.id))
+    setSelectedEmails(selectedEmails.length === filteredEmails.length ? [] : filteredEmails.map((email) => email.id))
   }
 
   const toggleStar = async (emailId: string) => {
     // Optimistic update
-    updateEmail(emailId, { is_starred: !emails.find(e => e.id === emailId)?.is_starred })
+    updateEmail(emailId, { is_starred: !filteredEmails.find(e => e.id === emailId)?.is_starred })
     
     // Real action
     await starEmailsAction([emailId], {
@@ -95,7 +121,7 @@ export function EmailTable() {
       onError: (error) => {
         console.error('Failed to star email:', error)
         // Revert optimistic update
-        updateEmail(emailId, { is_starred: !emails.find(e => e.id === emailId)?.is_starred })
+        updateEmail(emailId, { is_starred: !filteredEmails.find(e => e.id === emailId)?.is_starred })
       }
     })
   }
@@ -390,7 +416,7 @@ export function EmailTable() {
       <div className="flex items-center justify-between p-2 sm:p-4 border-b border-border min-w-0 bg-card sticky top-0 z-10">
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1 sm:gap-2">
-            <Checkbox checked={selectedEmails.length === emails.length} onCheckedChange={toggleAllEmails} className="h-4 w-4" />
+            <Checkbox checked={selectedEmails.length === filteredEmails.length} onCheckedChange={toggleAllEmails} className="h-4 w-4" />
             <Button variant="ghost" size="sm" className="p-1 sm:p-2" onClick={refreshEmails}>
               <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
@@ -413,10 +439,10 @@ export function EmailTable() {
 
         <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
           <span className="hidden sm:inline">
-            1-{emails.length} of {emails.length}
+            1-{filteredEmails.length} of {filteredEmails.length}
           </span>
           <span className="sm:hidden">
-            {emails.length}
+            {filteredEmails.length}
           </span>
           <Button variant="ghost" size="sm" disabled className="p-1 sm:p-2">
             <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -429,7 +455,7 @@ export function EmailTable() {
 
       <div className="w-full">
         <div className="divide-y divide-border min-w-0">
-          {emails.map((email) => (
+          {filteredEmails.map((email) => (
             <div
               key={email.id}
               className={`flex items-center px-2 sm:px-4 py-2 cursor-pointer hover:shadow-sm transition-all duration-150 min-w-0 ${
