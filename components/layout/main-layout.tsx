@@ -19,6 +19,8 @@ import {
   Trash2,
   Pencil,
   Settings,
+  RefreshCw,
+  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -41,10 +43,26 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [isInitialized, setIsInitialized] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const pathname = usePathname()
   const enterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const previousPathnameRef = useRef<string>(pathname)
+
+  const syncEmails = async () => {
+    setSyncing(true)
+    try {
+      const response = await fetch('/api/gmail/sync', {
+        method: 'POST'
+      })
+      const result = await response.json()
+      console.log('Sync result:', result)
+    } catch (error) {
+      console.error('Sync error:', error)
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   // --- Initialize sidebar state from localStorage ---
   useEffect(() => {
@@ -220,7 +238,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   // --- Navigation data ---
   const navigation: NavigationItem[] = [
     { name: "Dashboard", href: "/dashboard", icon: Inbox },
-    { name: "Emails", href: "/emails", icon: Mail },
     { name: "Starred", href: "/starred", icon: Star },
     { name: "Snoozed", href: "/snoozed", icon: Clock },
     { name: "Sent", href: "/sent", icon: Send },
@@ -260,6 +277,25 @@ export function MainLayout({ children }: MainLayoutProps) {
                 EmailAI
               </h1>
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={syncEmails}
+              disabled={syncing}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {syncing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span className="hidden sm:inline">Sync...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Sync Gmail</span>
+                </>
+              )}
+            </Button>
           </div>
           <div className="flex-1 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-2 sm:mx-4 md:mx-6 lg:mx-8">
             <div className="relative">
@@ -410,7 +446,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 overflow-hidden transition-all duration-300">{children}</main>
+        <main className="flex-1 min-w-0 overflow-auto transition-all duration-300">{children}</main>
       </div>
     </div>
   )

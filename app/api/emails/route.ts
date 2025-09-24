@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
     const folder = searchParams.get('folder') || 'all'
 
-    // Build base query with proper join
+    // Build base query - RLS policies handle user authorization automatically
     let query = supabase
       .from('messages')
       .select(`
@@ -48,16 +48,15 @@ export async function GET(request: NextRequest) {
         from_name,
         to_emails,
         cc_emails,
-        snippet,
+        body,
+        body_html,
         is_read,
         is_starred,
         is_important,
         is_sent,
         sent_at,
-        received_at,
-        thread:threads(subject, snippet)
+        received_at
       `)
-      .eq('user_id', session.user.id)
       .order('received_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -91,10 +90,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total count for pagination
+    // RLS policies handle user authorization automatically
     let countQuery = supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', session.user.id)
 
     // Apply same folder filter for count
     switch (folder) {
