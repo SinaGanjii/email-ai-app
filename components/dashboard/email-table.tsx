@@ -116,10 +116,9 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     // Real action
     await starEmailsAction([emailId], {
       onSuccess: () => {
-        console.log('Email starred successfully')
+        // Starred successfully
       },
       onError: (error) => {
-        console.error('Failed to star email:', error)
         // Revert optimistic update
         updateEmail(emailId, { is_starred: !filteredEmails.find(e => e.id === emailId)?.is_starred })
       }
@@ -135,12 +134,10 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     // Real action
     await deleteEmailsAction(selectedEmails, {
       onSuccess: () => {
-        console.log('Emails deleted successfully')
         setSelectedEmails([])
         setDeleteModalOpen(false)
       },
       onError: (error) => {
-        console.error('Failed to delete emails:', error)
         // Refresh emails to revert optimistic update
         refreshEmails()
       }
@@ -154,12 +151,10 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     // Real action
     await archiveEmailsAction(selectedEmails, {
       onSuccess: () => {
-        console.log('Emails archived successfully')
         setSelectedEmails([])
         setArchiveModalOpen(false)
       },
       onError: (error) => {
-        console.error('Failed to archive emails:', error)
         // Refresh emails to revert optimistic update
         refreshEmails()
       }
@@ -167,29 +162,21 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
   }
 
   const handleDeleteEmail = async (emailId: string) => {
-    console.log('🗑️ Starting delete process for email:', emailId)
-    
     // Optimistic update - mark as in trash instead of deleting
     updateEmail(emailId, { is_in_trash: true, is_deleted: false })
-    console.log('✅ Optimistic update completed - marked as in trash')
     
     // Real action
-    console.log('🚀 Calling deleteEmailsAction...')
     try {
-      const result = await deleteEmailsAction([emailId], {
+      await deleteEmailsAction([emailId], {
         onSuccess: (data) => {
-          console.log('✅ Email deleted successfully:', data)
+          // Email deleted successfully
         },
         onError: (error) => {
-          console.error('❌ Failed to delete email:', error)
           // Refresh emails to revert optimistic update
           refreshEmails()
         }
       })
-      
-      console.log('📊 Delete action result:', result)
     } catch (error) {
-      console.error('💥 Unexpected error in handleDeleteEmail:', error)
       // Refresh emails to revert optimistic update
       refreshEmails()
     }
@@ -202,10 +189,9 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     // Real action
     await archiveEmailsAction([emailId], {
       onSuccess: () => {
-        console.log('Email archived successfully')
+        // Email archived successfully
       },
       onError: (error) => {
-        console.error('Failed to archive email:', error)
         // Refresh emails to revert optimistic update
         refreshEmails()
       }
@@ -213,7 +199,7 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
   }
 
   const handleAgentAction = (emailId: string, agent: string) => {
-    console.log(`Using ${agent} agent on email ${emailId}`)
+    // Agent action placeholder
   }
 
   const openEmail = (email: SyncedEmail) => {

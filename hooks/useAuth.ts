@@ -25,8 +25,6 @@ export function useAuth() {
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
-        
         if (event === 'SIGNED_IN' && session?.user) {
           try {
             // Utiliser directement la session pour éviter l'appel API
@@ -44,7 +42,7 @@ export function useAuth() {
             setAuthState({ user, loading: false, error: null })
           } catch (error: any) {
             if (error?.message !== 'Auth session missing!') {
-              console.error('Error getting user after sign in:', error)
+              // Error getting user after sign in
             }
             setAuthState({ user: null, loading: false, error: null })
           }
@@ -67,7 +65,7 @@ export function useAuth() {
             setAuthState({ user, loading: false, error: null })
           } catch (error: any) {
             if (error?.message !== 'Auth session missing!') {
-              console.error('Error refreshing user data:', error)
+              // Error refreshing user data
             }
           }
         }
@@ -96,7 +94,6 @@ export function useAuth() {
       ]) as any
       
       if (error) {
-        console.error('Session error:', error)
         setAuthState({ user: null, loading: false, error: null })
         return
       }
@@ -120,11 +117,9 @@ export function useAuth() {
       }
     } catch (error: any) {
       if (error?.message === 'Auth timeout') {
-        console.warn('Auth verification timeout - using cached session')
         // En cas de timeout, essayer de continuer avec l'état actuel
         setAuthState({ user: null, loading: false, error: null })
       } else if (error?.message !== 'Auth session missing!') {
-        console.error('Error checking auth:', error)
         setAuthState({ user: null, loading: false, error: null })
       } else {
         setAuthState({ user: null, loading: false, error: null })
@@ -145,7 +140,6 @@ export function useAuth() {
       // Redirection immédiate pour éviter les états intermédiaires
       router.push('/auth/login')
     } catch (error) {
-      console.error('Error signing out:', error)
       setAuthState(prev => ({ ...prev, loading: false, error: 'Failed to sign out' }))
     }
   }

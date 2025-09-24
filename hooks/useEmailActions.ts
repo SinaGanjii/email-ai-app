@@ -25,8 +25,6 @@ export function useEmailActions() {
     setError(null)
 
     try {
-      console.log('🚀 useEmailActions: Calling API with:', { action, data })
-      
       const response = await fetch('/api/emails/actions', {
         method: 'POST',
         headers: {
@@ -38,24 +36,19 @@ export function useEmailActions() {
         })
       })
 
-      console.log('📡 useEmailActions: Response status:', response.status)
-      
       const result = await response.json()
-      console.log('📊 useEmailActions: Response data:', result)
 
       if (result.success) {
         options?.onSuccess?.(result)
         return result
       } else {
         const errorMsg = result.error || 'Action failed'
-        console.error('❌ useEmailActions: Action failed:', errorMsg)
         setError(errorMsg)
         options?.onError?.(errorMsg)
         return { success: false, error: errorMsg }
       }
     } catch (err: any) {
       const errorMsg = err.message || 'Network error'
-      console.error('💥 useEmailActions: Network error:', errorMsg)
       setError(errorMsg)
       options?.onError?.(errorMsg)
       return { success: false, error: errorMsg }

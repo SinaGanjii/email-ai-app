@@ -283,85 +283,46 @@ async function handleArchiveEmails(gmailClient: any, supabase: any, emailIds: st
 
 async function handleStarEmails(gmailClient: any, supabase: any, emailIds: string[]) {
   try {
-    console.log('Starting star emails process for:', emailIds)
     const results = []
     
     for (const emailId of emailIds) {
-      console.log('Processing email ID:', emailId)
-      
-      // Get current starred status and Gmail ID
+      // Get current starred status
       const { data: email, error: emailError } = await supabase
         .from('messages')
-        .select('gmail_id, is_starred')
+        .select('is_starred')
         .eq('id', emailId)
         .single()
 
-      console.log('Email data:', email, 'Error:', emailError)
-
       if (emailError) {
-        console.error('Error fetching email:', emailError)
         results.push({ emailId, success: false, error: `Database error: ${emailError.message}` })
         continue
       }
 
-      if (email?.gmail_id) {
+      if (email) {
         const newStarredStatus = !email.is_starred
-        console.log('Current starred status:', email.is_starred, 'New status:', newStarredStatus)
         
-        try {
-          // Update in Gmail
-          if (newStarredStatus) {
-            console.log('Adding STARRED label to Gmail')
-            await gmailClient.users.messages.modify({
-              userId: 'me',
-              id: email.gmail_id,
-              requestBody: {
-                addLabelIds: ['STARRED']
-              }
-            })
-          } else {
-            console.log('Removing STARRED label from Gmail')
-            await gmailClient.users.messages.modify({
-              userId: 'me',
-              id: email.gmail_id,
-              requestBody: {
-                removeLabelIds: ['STARRED']
-              }
-            })
-          }
+        // Update database only (no Gmail interaction)
+        const { error: updateError } = await supabase
+          .from('messages')
+          .update({ is_starred: newStarredStatus })
+          .eq('id', emailId)
 
-          // Update database
-          console.log('Updating database with new starred status')
-          const { error: updateError } = await supabase
-            .from('messages')
-            .update({ is_starred: newStarredStatus })
-            .eq('id', emailId)
-
-          if (updateError) {
-            console.error('Database update error:', updateError)
-            results.push({ emailId, success: false, error: `Database update failed: ${updateError.message}` })
-          } else {
-            console.log('Successfully updated starred status')
-            results.push({ emailId, success: true, starred: newStarredStatus })
-          }
-        } catch (gmailError: any) {
-          console.error('Gmail API error:', gmailError)
-          results.push({ emailId, success: false, error: `Gmail API error: ${gmailError.message}` })
+        if (updateError) {
+          results.push({ emailId, success: false, error: `Database update failed: ${updateError.message}` })
+        } else {
+          results.push({ emailId, success: true, starred: newStarredStatus })
         }
       } else {
-        console.error('Email not found or no Gmail ID')
-        results.push({ emailId, success: false, error: 'Email not found or no Gmail ID' })
+        results.push({ emailId, success: false, error: 'Email not found' })
       }
     }
 
-    console.log('Star emails process completed. Results:', results)
     return NextResponse.json({
       success: true,
       message: `Updated star status for ${results.filter(r => r.success).length} emails`,
       results
     })
   } catch (error: any) {
-    console.error('Unexpected error in handleStarEmails:', error)
     return NextResponse.json({
       success: false,
       error: 'Star update failed',

@@ -160,8 +160,9 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
 
   // Charger les emails seulement si authentifié et pas encore chargé
   useEffect(() => {
-    if (isAuthenticated && user && emails.length === 0) {
-      fetchEmails()
+    if (isAuthenticated && user) {
+      // Force refresh when user changes to ensure we get fresh data
+      fetchEmails(true)
     }
   }, [isAuthenticated, user])
 
