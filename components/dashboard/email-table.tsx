@@ -27,6 +27,7 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { useEmailCache } from "@/hooks/useEmailCache"
 
 interface SyncedEmail {
   id: string
@@ -45,46 +46,13 @@ interface SyncedEmail {
 }
 
 export function EmailTable() {
-  const { isAuthenticated } = useAuth()
-  const [emails, setEmails] = useState<SyncedEmail[]>([])
-  const [loading, setLoading] = useState(false)
-  const [fetchError, setFetchError] = useState<string | null>(null)
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const { emails, loading, error: fetchError, refreshEmails, updateEmail, deleteEmail } = useEmailCache()
   const [selectedEmails, setSelectedEmails] = useState<string[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [archiveModalOpen, setArchiveModalOpen] = useState(false)
   const [hoveredEmail, setHoveredEmail] = useState<string | null>(null)
   const [selectedEmail, setSelectedEmail] = useState<SyncedEmail | null>(null)
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchEmails()
-    }
-  }, [isAuthenticated])
-
-  const fetchEmails = async () => {
-    setLoading(true)
-    setFetchError(null)
-    try {
-      const response = await fetch('/api/emails')
-      const data = await response.json()
-      
-      if (response.ok && data.success) {
-        setEmails(data.emails || [])
-      } else {
-        const errorMsg = data.error || 'Unknown error'
-        console.error('Error fetching emails:', errorMsg)
-        setFetchError(errorMsg)
-        setEmails([])
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Network error'
-      console.error('Error fetching emails:', errorMsg)
-      setFetchError(errorMsg)
-      setEmails([])
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -114,27 +82,27 @@ export function EmailTable() {
   }
 
   const toggleStar = (emailId: string) => {
-    setEmails((prev) => prev.map((email) => (email.id === emailId ? { ...email, is_starred: !email.is_starred } : email)))
+    updateEmail(emailId, { is_starred: !emails.find(e => e.id === emailId)?.is_starred })
   }
 
   const handleDeleteConfirm = () => {
-    setEmails((prev) => prev.filter((email) => !selectedEmails.includes(email.id)))
+    selectedEmails.forEach(emailId => deleteEmail(emailId))
     setSelectedEmails([])
     setDeleteModalOpen(false)
   }
 
   const handleArchiveConfirm = () => {
-    setEmails((prev) => prev.filter((email) => !selectedEmails.includes(email.id)))
+    selectedEmails.forEach(emailId => deleteEmail(emailId))
     setSelectedEmails([])
     setArchiveModalOpen(false)
   }
 
   const handleDeleteEmail = (emailId: string) => {
-    setEmails((prev) => prev.filter((email) => email.id !== emailId))
+    deleteEmail(emailId)
   }
 
   const handleArchiveEmail = (emailId: string) => {
-    setEmails((prev) => prev.filter((email) => email.id !== emailId))
+    deleteEmail(emailId)
   }
 
   const handleAgentAction = (emailId: string, agent: string) => {
@@ -143,6 +111,16 @@ export function EmailTable() {
 
   const openEmail = (email: SyncedEmail) => {
     setSelectedEmail(email)
+  }
+
+  // Attendre que l'authentification soit vérifiée
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+        <span>Vérification de l'authentification...</span>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
@@ -185,7 +163,7 @@ export function EmailTable() {
     return (
       <div className="flex flex-col w-full h-full bg-white">
         {/* Header Bar - Minimal Gmail Style */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -234,55 +212,46 @@ export function EmailTable() {
           </div>
         </div>
 
-        {/* Action Buttons - Minimal Row */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-gray-50/50">
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-lg">
-              <Reply className="h-4 w-4 mr-2" />
-              Répondre
-            </Button>
-            <Button variant="ghost" size="sm" className="px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-lg">
-              <ReplyAll className="h-4 w-4 mr-2" />
-              Répondre à tous
-            </Button>
-            <Button variant="ghost" size="sm" className="px-3 py-2 text-gray-700 hover:bg-gray-200 rounded-lg">
-              <Forward className="h-4 w-4 mr-2" />
-              Transférer
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => toggleStar(selectedEmail.id)}
-              className={`p-2 rounded-full ${selectedEmail.is_starred ? "text-yellow-500" : "text-gray-600 hover:bg-gray-200"}`}
-            >
-              <Star className={`h-5 w-5 ${selectedEmail.is_starred ? "fill-current" : ""}`} />
-            </Button>
-            <Button variant="ghost" size="sm" className="p-2 text-gray-600 hover:bg-gray-200 rounded-full">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
 
-        {/* Email Content - Clean Layout */}
-        <div className="flex-1 overflow-auto">
-          <div className="px-6 py-6">
-            {/* Sender Info - Clean Card Style */}
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-lg">
-                {getEmailDisplayName(selectedEmail).charAt(0).toUpperCase()}
+        {/* Email Content - Gmail Style Layout */}
+        <div className="flex-1 overflow-auto bg-white">
+          <div className="px-6 py-4">
+            {/* Sender Info - Gmail Style Layout */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+                  {getEmailDisplayName(selectedEmail).charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900">{getEmailDisplayName(selectedEmail)}</span>
+                    <span className="text-gray-500 text-sm">&lt;{selectedEmail.from_email}&gt;</span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-gray-500 text-sm">À moi</span>
+                    <span className="text-gray-400 text-sm">▼</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{getEmailDisplayName(selectedEmail)}</span>
-                  <span className="text-gray-500 text-sm">{selectedEmail.from_email}</span>
-                </div>
-                <div className="text-sm text-gray-500 mb-1">À moi</div>
-                <div className="text-sm text-gray-500">
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
                   {formatDate(selectedEmail.sent_at || selectedEmail.received_at)}
-                </div>
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => toggleStar(selectedEmail.id)}
+                  className={`p-1 ${selectedEmail.is_starred ? "text-yellow-500" : "text-gray-400 hover:text-gray-600"}`}
+                >
+                  <Star className={`h-4 w-4 ${selectedEmail.is_starred ? "fill-current" : ""}`} />
+                </Button>
+                <Button variant="ghost" size="sm" className="p-1 text-gray-400 hover:text-gray-600">
+                  <Reply className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="p-1 text-gray-400 hover:text-gray-600">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -291,7 +260,7 @@ export function EmailTable() {
               <div className="text-gray-800 leading-relaxed text-base">
                 {selectedEmail.body_html ? (
                   <div 
-                    className="email-content prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-a:text-blue-600 prose-strong:text-gray-900 prose-blockquote:text-gray-600"
+                    className="email-content prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-a:text-blue-600 prose-strong:text-gray-900 prose-blockquote:text-gray-600 prose-img:rounded-lg prose-img:shadow-sm"
                     dangerouslySetInnerHTML={{ __html: selectedEmail.body_html }}
                   />
                 ) : selectedEmail.body ? (
@@ -307,24 +276,24 @@ export function EmailTable() {
             </div>
 
             {/* Status Badges - Subtle */}
-            <div className="flex gap-2 mt-8 pt-6 border-t border-gray-100">
+            <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100">
               {selectedEmail.is_starred && (
-                <span className="px-3 py-1 bg-yellow-50 text-yellow-700 text-sm rounded-full border border-yellow-200">
+                <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs rounded-full border border-yellow-200">
                   ⭐ Favori
                 </span>
               )}
               {selectedEmail.is_important && (
-                <span className="px-3 py-1 bg-red-50 text-red-700 text-sm rounded-full border border-red-200">
+                <span className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded-full border border-red-200">
                   Important
                 </span>
               )}
               {!selectedEmail.is_read && (
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full border border-blue-200">
+                <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200">
                   Non lu
                 </span>
               )}
               {selectedEmail.is_sent && (
-                <span className="px-3 py-1 bg-green-50 text-green-700 text-sm rounded-full border border-green-200">
+                <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full border border-green-200">
                   Envoyé
                 </span>
               )}
@@ -341,7 +310,7 @@ export function EmailTable() {
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-1 sm:gap-2">
             <Checkbox checked={selectedEmails.length === emails.length} onCheckedChange={toggleAllEmails} className="h-4 w-4" />
-            <Button variant="ghost" size="sm" className="p-1 sm:p-2" onClick={fetchEmails}>
+            <Button variant="ghost" size="sm" className="p-1 sm:p-2" onClick={refreshEmails}>
               <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
             <Button variant="ghost" size="sm" className="p-1 sm:p-2">

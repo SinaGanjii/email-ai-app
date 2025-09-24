@@ -1,5 +1,5 @@
 import { MainLayout } from "@/components/layout/main-layout"
-import { AuthGuard } from "@/components/auth/AuthGuard"
+import { EmailCacheProvider } from "@/hooks/useEmailCache"
 
 export default function DashboardLayout({
   children,
@@ -7,8 +7,8 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthGuard requireAuth={true}>
+    <EmailCacheProvider>
       <MainLayout>{children}</MainLayout>
-    </AuthGuard>
+    </EmailCacheProvider>
   )
 }

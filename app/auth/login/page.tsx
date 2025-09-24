@@ -12,7 +12,6 @@ import { AuthLayout } from "@/components/auth/auth-layout"
 import { GoogleLoginButton } from "@/components/auth/GoogleLoginButton"
 import { Eye, EyeOff } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
-import { AuthGuard } from "@/components/auth/AuthGuard"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -41,7 +40,7 @@ export default function LoginPage() {
 
       if (data.user) {
         console.log("Login successful:", data.user.email)
-        // La redirection se fera automatiquement via AuthGuard
+        // Redirection directe vers le dashboard
         router.push("/dashboard")
       }
     } catch (error) {
@@ -53,8 +52,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthGuard requireAuth={false}>
-      <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
+    <AuthLayout title="Welcome back" subtitle="Sign in to your account to continue">
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -144,6 +142,5 @@ export default function LoginPage() {
         </div>
       </form>
     </AuthLayout>
-    </AuthGuard>
   )
 }
