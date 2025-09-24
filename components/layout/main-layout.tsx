@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
+import { SendEmailModal } from "@/components/email/send-email-modal"
 import {
   Menu,
   Mail,
@@ -44,6 +45,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [isNavigating, setIsNavigating] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [composeModalOpen, setComposeModalOpen] = useState(false)
   const pathname = usePathname()
   const enterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -372,6 +374,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         >
           <div className="p-3">
             <Button
+              onClick={() => setComposeModalOpen(true)}
               className={cn(
                 "w-full gap-2 mb-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg transition-all duration-300 h-9",
                 sidebarOpen ? "justify-start" : "justify-center px-2"
@@ -448,6 +451,12 @@ export function MainLayout({ children }: MainLayoutProps) {
 
         <main className="flex-1 min-w-0 overflow-auto transition-all duration-300">{children}</main>
       </div>
+
+      {/* Compose Email Modal */}
+      <SendEmailModal 
+        isOpen={composeModalOpen} 
+        onClose={() => setComposeModalOpen(false)} 
+      />
     </div>
   )
 }

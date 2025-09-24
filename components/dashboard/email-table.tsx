@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useEmailCache } from "@/hooks/useEmailCache"
+import { useEmailActions } from "@/hooks/useEmailActions"
 
 interface SyncedEmail {
   id: string
@@ -47,7 +48,8 @@ interface SyncedEmail {
 
 export function EmailTable() {
   const { isAuthenticated, loading: authLoading } = useAuth()
-  const { emails, loading, error: fetchError, refreshEmails, updateEmail, deleteEmail } = useEmailCache()
+  const { emails, loading, error: fetchError, refreshEmails, updateEmail, deleteEmail, deleteEmails, archiveEmails, starEmails, markAsRead } = useEmailCache()
+  const { deleteEmails: deleteEmailsAction, archiveEmails: archiveEmailsAction, starEmails: starEmailsAction, markAsRead: markAsReadAction, loading: actionLoading } = useEmailActions()
   const [selectedEmails, setSelectedEmails] = useState<string[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [archiveModalOpen, setArchiveModalOpen] = useState(false)
@@ -81,28 +83,107 @@ export function EmailTable() {
     setSelectedEmails(selectedEmails.length === emails.length ? [] : emails.map((email) => email.id))
   }
 
-  const toggleStar = (emailId: string) => {
+  const toggleStar = async (emailId: string) => {
+    // Optimistic update
     updateEmail(emailId, { is_starred: !emails.find(e => e.id === emailId)?.is_starred })
+    
+    // Real action
+    await starEmailsAction([emailId], {
+      onSuccess: () => {
+        console.log('Email starred successfully')
+      },
+      onError: (error) => {
+        console.error('Failed to star email:', error)
+        // Revert optimistic update
+        updateEmail(emailId, { is_starred: !emails.find(e => e.id === emailId)?.is_starred })
+      }
+    })
   }
 
-  const handleDeleteConfirm = () => {
-    selectedEmails.forEach(emailId => deleteEmail(emailId))
-    setSelectedEmails([])
-    setDeleteModalOpen(false)
+  const handleDeleteConfirm = async () => {
+    // Optimistic update - mark as in trash instead of deleting
+    selectedEmails.forEach(emailId => {
+      updateEmail(emailId, { is_in_trash: true, is_deleted: false })
+    })
+    
+    // Real action
+    await deleteEmailsAction(selectedEmails, {
+      onSuccess: () => {
+        console.log('Emails deleted successfully')
+        setSelectedEmails([])
+        setDeleteModalOpen(false)
+      },
+      onError: (error) => {
+        console.error('Failed to delete emails:', error)
+        // Refresh emails to revert optimistic update
+        refreshEmails()
+      }
+    })
   }
 
-  const handleArchiveConfirm = () => {
-    selectedEmails.forEach(emailId => deleteEmail(emailId))
-    setSelectedEmails([])
-    setArchiveModalOpen(false)
+  const handleArchiveConfirm = async () => {
+    // Optimistic update
+    archiveEmails(selectedEmails)
+    
+    // Real action
+    await archiveEmailsAction(selectedEmails, {
+      onSuccess: () => {
+        console.log('Emails archived successfully')
+        setSelectedEmails([])
+        setArchiveModalOpen(false)
+      },
+      onError: (error) => {
+        console.error('Failed to archive emails:', error)
+        // Refresh emails to revert optimistic update
+        refreshEmails()
+      }
+    })
   }
 
-  const handleDeleteEmail = (emailId: string) => {
-    deleteEmail(emailId)
+  const handleDeleteEmail = async (emailId: string) => {
+    console.log('🗑️ Starting delete process for email:', emailId)
+    
+    // Optimistic update - mark as in trash instead of deleting
+    updateEmail(emailId, { is_in_trash: true, is_deleted: false })
+    console.log('✅ Optimistic update completed - marked as in trash')
+    
+    // Real action
+    console.log('🚀 Calling deleteEmailsAction...')
+    try {
+      const result = await deleteEmailsAction([emailId], {
+        onSuccess: (data) => {
+          console.log('✅ Email deleted successfully:', data)
+        },
+        onError: (error) => {
+          console.error('❌ Failed to delete email:', error)
+          // Refresh emails to revert optimistic update
+          refreshEmails()
+        }
+      })
+      
+      console.log('📊 Delete action result:', result)
+    } catch (error) {
+      console.error('💥 Unexpected error in handleDeleteEmail:', error)
+      // Refresh emails to revert optimistic update
+      refreshEmails()
+    }
   }
 
-  const handleArchiveEmail = (emailId: string) => {
-    deleteEmail(emailId)
+  const handleArchiveEmail = async (emailId: string) => {
+    // Optimistic update
+    archiveEmails([emailId])
+    
+    // Real action
+    await archiveEmailsAction([emailId], {
+      onSuccess: () => {
+        console.log('Email archived successfully')
+      },
+      onError: (error) => {
+        console.error('Failed to archive email:', error)
+        // Refresh emails to revert optimistic update
+        refreshEmails()
+      }
+    })
   }
 
   const handleAgentAction = (emailId: string, agent: string) => {

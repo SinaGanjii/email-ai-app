@@ -54,6 +54,9 @@ export async function GET(request: NextRequest) {
         is_starred,
         is_important,
         is_sent,
+        is_archived,
+        is_deleted,
+        is_in_trash,
         sent_at,
         received_at
       `)
@@ -63,19 +66,25 @@ export async function GET(request: NextRequest) {
     // Apply folder filter
     switch (folder) {
       case 'inbox':
-        query = query.eq('is_sent', false)
+        query = query.eq('is_sent', false).eq('is_archived', false).eq('is_in_trash', false)
         break
       case 'sent':
-        query = query.eq('is_sent', true)
+        query = query.eq('is_sent', true).eq('is_in_trash', false)
         break
       case 'starred':
-        query = query.eq('is_starred', true)
+        query = query.eq('is_starred', true).eq('is_in_trash', false)
+        break
+      case 'archive':
+        query = query.eq('is_archived', true).eq('is_in_trash', false)
+        break
+      case 'trash':
+        query = query.eq('is_in_trash', true)
         break
       case 'important':
-        query = query.eq('is_important', true)
+        query = query.eq('is_important', true).eq('is_in_trash', false)
         break
       case 'unread':
-        query = query.eq('is_read', false)
+        query = query.eq('is_read', false).eq('is_in_trash', false)
         break
     }
 
@@ -98,19 +107,25 @@ export async function GET(request: NextRequest) {
     // Apply same folder filter for count
     switch (folder) {
       case 'inbox':
-        countQuery = countQuery.eq('is_sent', false)
+        countQuery = countQuery.eq('is_sent', false).eq('is_archived', false).eq('is_in_trash', false)
         break
       case 'sent':
-        countQuery = countQuery.eq('is_sent', true)
+        countQuery = countQuery.eq('is_sent', true).eq('is_in_trash', false)
         break
       case 'starred':
-        countQuery = countQuery.eq('is_starred', true)
+        countQuery = countQuery.eq('is_starred', true).eq('is_in_trash', false)
+        break
+      case 'archive':
+        countQuery = countQuery.eq('is_archived', true).eq('is_in_trash', false)
+        break
+      case 'trash':
+        countQuery = countQuery.eq('is_in_trash', true)
         break
       case 'important':
-        countQuery = countQuery.eq('is_important', true)
+        countQuery = countQuery.eq('is_important', true).eq('is_in_trash', false)
         break
       case 'unread':
-        countQuery = countQuery.eq('is_read', false)
+        countQuery = countQuery.eq('is_read', false).eq('is_in_trash', false)
         break
     }
 

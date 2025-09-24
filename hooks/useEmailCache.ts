@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 
-interface SyncedEmail {
+export interface SyncedEmail {
   id: string
   subject: string
   from_email: string
@@ -15,6 +15,9 @@ interface SyncedEmail {
   is_starred: boolean
   is_important: boolean
   is_sent: boolean
+  is_archived: boolean
+  is_deleted: boolean
+  is_in_trash: boolean
   sent_at: string | null
   received_at: string
 }
@@ -28,6 +31,11 @@ interface EmailCacheContextType {
   refreshEmails: () => Promise<void>
   updateEmail: (emailId: string, updates: Partial<SyncedEmail>) => void
   deleteEmail: (emailId: string) => void
+  deleteEmails: (emailIds: string[]) => void
+  archiveEmails: (emailIds: string[]) => void
+  starEmails: (emailIds: string[]) => void
+  markAsRead: (emailIds: string[]) => void
+  restoreEmails: (emailIds: string[]) => void
 }
 
 const EmailCacheContext = createContext<EmailCacheContextType | undefined>(undefined)
@@ -103,7 +111,51 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
   }
 
   const deleteEmail = (emailId: string) => {
-    setEmails(prev => prev.filter(email => email.id !== emailId))
+    setEmails(prev => prev.map(email => 
+      email.id === emailId 
+        ? { ...email, is_in_trash: true, is_deleted: false }
+        : email
+    ))
+  }
+
+  const deleteEmails = (emailIds: string[]) => {
+    setEmails(prev => prev.map(email => 
+      emailIds.includes(email.id)
+        ? { ...email, is_in_trash: true, is_deleted: false }
+        : email
+    ))
+  }
+
+  const archiveEmails = (emailIds: string[]) => {
+    setEmails(prev => prev.map(email => 
+      emailIds.includes(email.id) 
+        ? { ...email, is_archived: true }
+        : email
+    ))
+  }
+
+  const starEmails = (emailIds: string[]) => {
+    setEmails(prev => prev.map(email => 
+      emailIds.includes(email.id) 
+        ? { ...email, is_starred: !email.is_starred }
+        : email
+    ))
+  }
+
+  const markAsRead = (emailIds: string[]) => {
+    setEmails(prev => prev.map(email => 
+      emailIds.includes(email.id) 
+        ? { ...email, is_read: true }
+        : email
+    ))
+  }
+
+  const restoreEmails = (emailIds: string[]) => {
+    setEmails(prev => prev.map(email => 
+      emailIds.includes(email.id) 
+        ? { ...email, is_in_trash: false, is_deleted: false }
+        : email
+    ))
   }
 
   // Charger les emails seulement si authentifié et pas encore chargé
@@ -121,7 +173,12 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
     fetchEmails,
     refreshEmails,
     updateEmail,
-    deleteEmail
+    deleteEmail,
+    deleteEmails,
+    archiveEmails,
+    starEmails,
+    markAsRead,
+    restoreEmails
   }
 
   return React.createElement(

@@ -52,8 +52,14 @@ CREATE TABLE messages (
     is_starred BOOLEAN DEFAULT FALSE,
     is_important BOOLEAN DEFAULT FALSE,
     is_sent BOOLEAN DEFAULT FALSE, -- آیا پیام ارسال شده یا دریافت شده
+    is_archived BOOLEAN DEFAULT FALSE, -- آیا پیام آرشیو شده
+    is_deleted BOOLEAN DEFAULT FALSE, -- آیا پیام حذف شده (soft delete)
+    is_in_trash BOOLEAN DEFAULT FALSE, -- آیا پیام در سطل زباله است
+    reply_to_message_id UUID REFERENCES messages(id), -- برای پاسخ‌ها
+    forwarded_from_message_id UUID REFERENCES messages(id), -- برای فورواردها
     sent_at TIMESTAMP WITH TIME ZONE,
     received_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE, -- زمان حذف
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -115,41 +121,49 @@ CREATE TABLE user_settings (
 );
 
 -- ایندکس‌ها برای سرعت
-CREATE INDEX idx_messages_user_id ON messages(user_id);
-CREATE INDEX idx_messages_thread_id ON messages(thread_id);
-CREATE INDEX idx_messages_gmail_id ON messages(gmail_id);
-CREATE INDEX idx_messages_from_email ON messages(from_email);
-CREATE INDEX idx_messages_subject ON messages(subject);
-CREATE INDEX idx_messages_sent_at ON messages(sent_at);
-CREATE INDEX idx_messages_received_at ON messages(received_at);
-CREATE INDEX idx_messages_is_read ON messages(is_read);
-CREATE INDEX idx_messages_is_starred ON messages(is_starred);
+CREATE INDEX idx_messages_user_id ON mail.messages(user_id);
+CREATE INDEX idx_messages_thread_id ON mail.messages(thread_id);
+CREATE INDEX idx_messages_gmail_id ON mail.messages(gmail_id);
+CREATE INDEX idx_messages_from_email ON mail.messages(from_email);
+CREATE INDEX idx_messages_subject ON mail.messages(subject);
+CREATE INDEX idx_messages_sent_at ON mail.messages(sent_at);
+CREATE INDEX idx_messages_received_at ON mail.messages(received_at);
+CREATE INDEX idx_messages_is_read ON mail.messages(is_read);
+CREATE INDEX idx_messages_is_starred ON mail.messages(is_starred);
+CREATE INDEX idx_messages_is_archived ON mail.messages(is_archived);
+CREATE INDEX idx_messages_is_deleted ON mail.messages(is_deleted);
+CREATE INDEX idx_messages_is_in_trash ON mail.messages(is_in_trash);
+CREATE INDEX idx_messages_reply_to ON mail.messages(reply_to_message_id);
+CREATE INDEX idx_messages_forwarded_from ON mail.messages(forwarded_from_message_id);
 
 -- GIN index برای full-text search (مثل Gmail search bar)
 CREATE INDEX idx_messages_search
-ON messages USING GIN (to_tsvector('english', coalesce(subject, '') || ' ' || coalesce(body, '')));
+ON mail.messages USING GIN (to_tsvector('english', coalesce(subject, '') || ' ' || coalesce(body, '')));
 
 -- Composite indexes برای queries رایج
-CREATE INDEX idx_messages_user_unread ON messages(user_id, is_read) WHERE is_read = false;
-CREATE INDEX idx_messages_user_starred ON messages(user_id, is_starred) WHERE is_starred = true;
-CREATE INDEX idx_messages_user_important ON messages(user_id, is_important) WHERE is_important = true;
+CREATE INDEX idx_messages_user_unread ON mail.messages(user_id, is_read) WHERE is_read = false;
+CREATE INDEX idx_messages_user_starred ON mail.messages(user_id, is_starred) WHERE is_starred = true;
+CREATE INDEX idx_messages_user_important ON mail.messages(user_id, is_important) WHERE is_important = true;
+CREATE INDEX idx_messages_user_archived ON mail.messages(user_id, is_archived) WHERE is_archived = true;
+CREATE INDEX idx_messages_user_trash ON mail.messages(user_id, is_in_trash) WHERE is_in_trash = true;
+CREATE INDEX idx_messages_user_sent ON mail.messages(user_id, is_sent) WHERE is_sent = true;
 
-CREATE INDEX idx_labels_user_id ON labels(user_id);
-CREATE INDEX idx_labels_type ON labels(type);
+CREATE INDEX idx_labels_user_id ON mail.labels(user_id);
+CREATE INDEX idx_labels_type ON mail.labels(type);
 
-CREATE INDEX idx_threads_user_id ON threads(user_id);
-CREATE INDEX idx_threads_gmail_thread_id ON threads(gmail_thread_id);
-CREATE INDEX idx_threads_updated_at ON threads(updated_at DESC);
+CREATE INDEX idx_threads_user_id ON mail.threads(user_id);
+CREATE INDEX idx_threads_gmail_thread_id ON mail.threads(gmail_thread_id);
+CREATE INDEX idx_threads_updated_at ON mail.threads(updated_at DESC);
 
-CREATE INDEX idx_attachments_message_id ON attachments(message_id);
-CREATE INDEX idx_attachments_size ON attachments(size) WHERE size > 0;
+CREATE INDEX idx_attachments_message_id ON mail.attachments(message_id);
+CREATE INDEX idx_attachments_size ON mail.attachments(size) WHERE size > 0;
 
-CREATE INDEX idx_ai_agents_user_id ON ai_agents(user_id);
-CREATE INDEX idx_ai_agents_is_active ON ai_agents(is_active);
+CREATE INDEX idx_ai_agents_user_id ON mail.ai_agents(user_id);
+CREATE INDEX idx_ai_agents_is_active ON mail.ai_agents(is_active);
 
-CREATE INDEX idx_agent_actions_agent_id ON agent_actions(agent_id);
-CREATE INDEX idx_agent_actions_message_id ON agent_actions(message_id);
-CREATE INDEX idx_agent_actions_status ON agent_actions(status);
+CREATE INDEX idx_agent_actions_agent_id ON mail.agent_actions(agent_id);
+CREATE INDEX idx_agent_actions_message_id ON mail.agent_actions(message_id);
+CREATE INDEX idx_agent_actions_status ON mail.agent_actions(status);
 
 -- RLS Policies (Row Level Security)
 ALTER TABLE labels ENABLE ROW LEVEL SECURITY;
