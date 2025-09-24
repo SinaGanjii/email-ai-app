@@ -219,7 +219,8 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   // --- Navigation data ---
   const navigation: NavigationItem[] = [
-    { name: "Inbox", href: "/dashboard", icon: Inbox, count: 23 },
+    { name: "Dashboard", href: "/dashboard", icon: Inbox },
+    { name: "Emails", href: "/emails", icon: Mail },
     { name: "Starred", href: "/starred", icon: Star },
     { name: "Snoozed", href: "/snoozed", icon: Clock },
     { name: "Sent", href: "/sent", icon: Send },

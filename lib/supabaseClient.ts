@@ -1,6 +1,8 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-export const supabase = createClientComponentClient()
+export const supabase = createClientComponentClient({
+  options: { db: { schema: 'mail' } }
+})
 
 // Centralized redirect path - easy to change later
 export const DEFAULT_REDIRECT_PATH = '/dashboard'
@@ -19,7 +21,8 @@ export async function signInWithGoogle(redirectTo: string = DEFAULT_REDIRECT_PAT
     const response = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`
+        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${redirectTo}`,
+        scopes: 'openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send'
       }
     })
 
@@ -85,6 +88,34 @@ export async function getCurrentUser(): Promise<CleanUser | null> {
     if (error?.message !== 'Auth session missing!') {
       console.error('Get current user failed:', error)
     }
+    return null
+  }
+}
+
+export async function getSessionInfo() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      console.error('Error getting session:', error)
+      return null
+    }
+
+    if (!session) {
+      return null
+    }
+
+    return {
+      user: session.user,
+      provider: session.user?.app_metadata?.provider,
+      hasAccessToken: !!session.access_token,
+      hasProviderToken: !!session.provider_token,
+      hasProviderRefreshToken: !!session.provider_refresh_token,
+      tokenExpiry: session.expires_at,
+      scopes: session.user?.app_metadata?.provider_scopes || 'No scopes found'
+    }
+  } catch (error: any) {
+    console.error('Get session info failed:', error)
     return null
   }
 }
