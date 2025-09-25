@@ -62,7 +62,7 @@ export function EmailRow({
         onRestore={onRestore}
       />
 
-      <div className="w-24 sm:w-40 md:w-48 flex-shrink-0 min-w-0 ml-2">
+      <div className="w-24 sm:w-40 md:w-48 flex-shrink-0 min-w-0 ml-4">
         <span
           className={`text-xs sm:text-sm truncate block ${getEmailStatus(email) === "unread" ? "font-semibold text-foreground" : "text-foreground"}`}
         >

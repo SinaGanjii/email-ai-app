@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Star, Archive, Trash2, Sparkles, MessageSquare, FileText, RotateCcw, Triangle } from "lucide-react"
+import { Star, Archive, Trash2, Sparkles, MessageSquare, FileText, RotateCcw } from "lucide-react"
 
 interface EmailActionsProps {
   email: any
@@ -60,9 +60,13 @@ export function EmailActions({
           onToggleImportant()
         }}
       >
-        <Triangle
-          className={`h-3 w-3 rotate-90 ${email.is_important ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`}
-        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 32 24"
+          className={`h-3 w-3 ${email.is_important ? "fill-yellow-500" : "fill-muted-foreground"}`}
+        >
+          <path d="M4 4h13l8 8-8 8H4l8-8-8-8z" />
+        </svg>
       </Button>
     </div>
   )
