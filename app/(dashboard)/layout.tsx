@@ -1,4 +1,4 @@
-import { MainLayout } from "@/components/layout/main-layout"
+import { MainLayout } from "@/components/layout/MainLayout"
 import { EmailCacheProvider } from "@/hooks/useEmailCache"
 
 export default function DashboardLayout({
