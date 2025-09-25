@@ -106,6 +106,10 @@ export function useEmailActions() {
     return executeAction('forward', { emailData }, options)
   }
 
+  const toggleImportant = async (emailIds: string[], options?: EmailActionOptions) => {
+    return executeAction('toggleImportant', { emailIds }, options)
+  }
+
   return {
     loading,
     error,
@@ -117,6 +121,7 @@ export function useEmailActions() {
     replyEmail,
     forwardEmail,
     restoreEmails,
+    toggleImportant,
     clearError: () => setError(null)
   }
 }

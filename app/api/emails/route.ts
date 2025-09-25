@@ -80,9 +80,6 @@ export async function GET(request: NextRequest) {
       case 'trash':
         query = query.eq('is_in_trash', true)
         break
-      case 'important':
-        query = query.eq('is_important', true).eq('is_in_trash', false)
-        break
       case 'unread':
         query = query.eq('is_read', false).eq('is_in_trash', false)
         break
@@ -120,9 +117,6 @@ export async function GET(request: NextRequest) {
         break
       case 'trash':
         countQuery = countQuery.eq('is_in_trash', true)
-        break
-      case 'important':
-        countQuery = countQuery.eq('is_important', true).eq('is_in_trash', false)
         break
       case 'unread':
         countQuery = countQuery.eq('is_read', false).eq('is_in_trash', false)

@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
       case 'star':
         return await handleStarEmails(gmailClient, supabase, emailIds)
       
+      case 'toggleImportant':
+        return await handleToggleImportant(supabase, emailIds)
+      
       case 'mark_read':
         return await handleMarkAsRead(gmailClient, supabase, emailIds)
       
@@ -361,6 +364,51 @@ async function handleMarkAsRead(gmailClient: any, supabase: any, emailIds: strin
     return NextResponse.json({
       success: false,
       error: 'Mark as read failed',
+      details: error.message
+    }, { status: 500 })
+  }
+}
+
+async function handleToggleImportant(supabase: any, emailIds: string[]) {
+  try {
+    const results = []
+    
+    for (const emailId of emailIds) {
+      // Get current important status
+      const { data: email } = await supabase
+        .from('messages')
+        .select('is_important')
+        .eq('id', emailId)
+        .single()
+
+      if (email) {
+        // Toggle important status (only in database, no Gmail sync)
+        const newImportantStatus = !email.is_important
+        
+        await supabase
+          .from('messages')
+          .update({ is_important: newImportantStatus })
+          .eq('id', emailId)
+
+        results.push({ 
+          emailId, 
+          success: true, 
+          is_important: newImportantStatus 
+        })
+      } else {
+        results.push({ emailId, success: false, error: 'Email not found' })
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Toggled important status for ${results.filter(r => r.success).length} emails`,
+      results
+    })
+  } catch (error: any) {
+    return NextResponse.json({
+      success: false,
+      error: 'Toggle important failed',
       details: error.message
     }, { status: 500 })
   }
