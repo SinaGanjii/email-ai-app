@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/hooks/useAuth"
-import { User, Mail, LogOut, IdCard, Shield } from "lucide-react"
+import { User, Mail, LogOut, Shield } from "lucide-react"
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth()
@@ -120,15 +120,6 @@ export default function ProfilePage() {
                   <p className="text-sm break-all">{user.email || "Not provided"}</p>
                 </div>
               </div>
-
-              {/* User ID */}
-              <div className="flex items-center gap-3">
-                <IdCard className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">User ID</p>
-                  <p className="text-sm font-mono text-xs break-all">{user.id}</p>
-                </div>
-              </div>
             </div>
 
             <Separator />
@@ -182,15 +173,6 @@ export default function ProfilePage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
                   <p className="text-sm break-all">{user.email || "Not provided"}</p>
-                </div>
-              </div>
-
-              {/* User ID */}
-              <div className="flex items-start gap-4">
-                <IdCard className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-muted-foreground mb-1">User ID</p>
-                  <p className="text-sm font-mono break-all">{user.id}</p>
                 </div>
               </div>
             </div>

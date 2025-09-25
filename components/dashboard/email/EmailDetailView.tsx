@@ -137,24 +137,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar }: EmailDetailC
             </div>
           </div>
 
-          {/* Status Badges - Subtle */}
-          <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100">
-            {selectedEmail.is_starred && (
-              <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs rounded-full border border-yellow-200">
-                ⭐ Favori
-              </span>
-            )}
-            {!selectedEmail.is_read && (
-              <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200">
-                Non lu
-              </span>
-            )}
-            {selectedEmail.is_sent && (
-              <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full border border-green-200">
-                Envoyé
-              </span>
-            )}
-          </div>
         </div>
       </div>
     </>
