@@ -68,35 +68,28 @@ export default function AgentsPage() {
     setMessages((prev) => [...prev, userMessage])
 
     try {
-      // Import dynamique seulement côté client
-      if (typeof window !== 'undefined') {
-        const { summarizeEmail } = await import('@/lib/emailSummarizer')
-        console.log('📧 Email to summarize:', { subject: email.subject, bodyLength: email.body?.length })
-        const result = await summarizeEmail(email.body)
+      console.log('📧 Email to summarize:', { subject: email.subject, bodyLength: email.body?.length })
       
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: result.success 
-            ? (result.summary || '').includes('error in your input') || (result.summary || '').includes('Summary generated successfully') || (result.summary || '').includes('not formatted correctly') || (result.summary || '').includes('not in a format') || (result.summary || '').includes('formatted incorrectly') || (result.summary || '').includes('pas reçu d\'email')
-              ? `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n**Contenu :**\n${email.body.substring(0, 300)}${email.body.length > 300 ? '...' : ''}\n\n⚠️ *L'API n8n a renvoyé une erreur, affichage du contenu original*`
-              : `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n---\n\n**📝 RÉSUMÉ :**\n\n${result.summary || 'Aucun résumé disponible'}\n\n---`
-            : `❌ Erreur lors du résumé : ${result.error}`,
-          sender: "ai",
-          agent: "summary",
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, aiMessage])
-      } else {
-        // Fallback si pas côté client
-        const fallbackMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n**Contenu :**\n${email.body.substring(0, 300)}${email.body.length > 300 ? '...' : ''}\n\n⚠️ *Résumé non disponible en mode serveur*`,
-          sender: "ai",
-          agent: "summary",
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, fallbackMessage])
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.body }),
+      })
+      
+      const result = await res.json()
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: result.success 
+          ? (result.summary || '').includes('error in your input') || (result.summary || '').includes('Summary generated successfully') || (result.summary || '').includes('not formatted correctly') || (result.summary || '').includes('not in a format') || (result.summary || '').includes('formatted incorrectly') || (result.summary || '').includes('pas reçu d\'email')
+            ? `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n**Contenu :**\n${email.body.substring(0, 300)}${email.body.length > 300 ? '...' : ''}\n\n⚠️ *L'API n8n a renvoyé une erreur, affichage du contenu original*`
+            : `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n---\n\n**📝 RÉSUMÉ :**\n\n${result.summary || 'Aucun résumé disponible'}\n\n---`
+          : `❌ Erreur lors du résumé : ${result.error}`,
+        sender: "ai",
+        agent: "summary",
+        timestamp: new Date(),
       }
+      setMessages((prev) => [...prev, aiMessage])
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
