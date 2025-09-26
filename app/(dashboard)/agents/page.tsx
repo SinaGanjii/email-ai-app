@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, ChevronDown, Mic, Sparkles, Book as Broom, Reply, FileText } from "lucide-react"
@@ -23,23 +22,27 @@ interface Message {
 }
 
 export default function AgentsPage() {
-  const searchParams = useSearchParams()
   const [selectedAgent, setSelectedAgent] = useState("auto")
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
   // Initialiser l'agent depuis l'URL et récupérer l'email depuis sessionStorage
   useEffect(() => {
-    const agentFromUrl = searchParams.get('agent')
-    if (agentFromUrl) {
-      setSelectedAgent(agentFromUrl)
-    }
-
-    // Récupérer l'email depuis sessionStorage (seulement côté client)
+    setIsClient(true)
+    
+    // Récupérer l'agent depuis l'URL (seulement côté client)
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const agentFromUrl = urlParams.get('agent')
+      if (agentFromUrl) {
+        setSelectedAgent(agentFromUrl)
+      }
+
+      // Récupérer l'email depuis sessionStorage
       const emailData = sessionStorage.getItem('emailToSummarize')
       if (emailData) {
         try {
@@ -53,7 +56,7 @@ export default function AgentsPage() {
         }
       }
     }
-  }, [searchParams])
+  }, [])
 
   const handleAutoSummarize = async (email: any) => {
     setIsLoading(true)
@@ -153,6 +156,18 @@ export default function AgentsPage() {
   }
 
   const selectedAgentData = agents.find((a) => a.id === selectedAgent)
+
+  // Ne pas rendre avant que le client soit prêt
+  if (!isClient) {
+    return (
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col bg-background">
