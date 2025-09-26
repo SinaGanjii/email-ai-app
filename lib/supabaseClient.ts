@@ -18,6 +18,11 @@ export interface CleanUser {
 
 export async function signInWithGoogle(redirectTo: string = DEFAULT_REDIRECT_PATH) {
   try {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined') {
+      throw new Error('signInWithGoogle can only be called in browser environment')
+    }
+
     const response = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -46,8 +51,10 @@ export async function signOut(): Promise<void> {
       throw error
     }
     
-    // Force redirect to login page on successful sign out
-    window.location.href = '/auth/login'
+    // Force redirect to login page on successful sign out (only in browser)
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login'
+    }
   } catch (error) {
     console.error('Sign out failed:', error)
     throw error
