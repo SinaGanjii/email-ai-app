@@ -117,7 +117,7 @@ export default function AgentsPage() {
       if (selectedAgent === "summary") {
         responseContent = "🚧 **Version MVP** - L'agent de résumé fonctionne uniquement avec l'icône de résumé 📝 dans la liste des emails. Pour l'instant, les messages directs ne sont pas pris en charge."
       } else {
-        responseContent = `I'm the ${agents.find((a) => a.id === selectedAgent)?.name} agent. I've processed your message: "${userMessage.content}". How can I help you further?`
+        responseContent = "🚧 **Version MVP** - Cet agent n'est pas encore fonctionnel. Seul l'agent de résumé (avec l'icône 📝) est disponible pour le moment."
       }
       
       const aiMessage: Message = {

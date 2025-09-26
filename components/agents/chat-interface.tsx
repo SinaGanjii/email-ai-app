@@ -144,14 +144,14 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
   const getAgentResponse = (agentId: string, userInput: string): string => {
     const responses = {
       cleanup:
-        "I've analyzed your request for email cleanup. I found several spam emails and promotional messages that can be safely removed. Would you like me to proceed with the cleanup?",
+        "🚧 **Version MVP** - Cet agent n'est pas encore fonctionnel. Seul l'agent de résumé (avec l'icône 📝) est disponible pour le moment.",
       reply:
-        "I can help you craft a professional response. Based on the context, here's a suggested reply that maintains a professional tone while addressing all key points mentioned.",
+        "🚧 **Version MVP** - Cet agent n'est pas encore fonctionnel. Seul l'agent de résumé (avec l'icône 📝) est disponible pour le moment.",
       summary:
         "🚧 **Version MVP** - L'agent de résumé fonctionne uniquement avec l'icône de résumé 📝 dans la liste des emails. Pour l'instant, les messages directs ne sont pas pris en charge.",
-      auto: "I'm analyzing your request and will automatically select the best approach. Based on the content, I recommend using the Smart Reply agent for this task.",
+      auto: "🚧 **Version MVP** - Cet agent n'est pas encore fonctionnel. Seul l'agent de résumé (avec l'icône 📝) est disponible pour le moment.",
     }
-    return responses[agentId as keyof typeof responses] || "I'm here to help with your email management needs."
+    return responses[agentId as keyof typeof responses] || "🚧 **Version MVP** - Cet agent n'est pas encore fonctionnel. Seul l'agent de résumé (avec l'icône 📝) est disponible pour le moment."
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
