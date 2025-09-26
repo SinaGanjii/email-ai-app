@@ -37,17 +37,19 @@ export default function AgentsPage() {
       setSelectedAgent(agentFromUrl)
     }
 
-    // Récupérer l'email depuis sessionStorage
-    const emailData = sessionStorage.getItem('emailToSummarize')
-    if (emailData) {
-      try {
-        const email = JSON.parse(emailData)
-        // Déclencher automatiquement le résumé
-        handleAutoSummarize(email)
-        // Nettoyer sessionStorage après récupération
-        sessionStorage.removeItem('emailToSummarize')
-      } catch (error) {
-        console.error('Erreur lors du parsing de l\'email:', error)
+    // Récupérer l'email depuis sessionStorage (seulement côté client)
+    if (typeof window !== 'undefined') {
+      const emailData = sessionStorage.getItem('emailToSummarize')
+      if (emailData) {
+        try {
+          const email = JSON.parse(emailData)
+          // Déclencher automatiquement le résumé
+          handleAutoSummarize(email)
+          // Nettoyer sessionStorage après récupération
+          sessionStorage.removeItem('emailToSummarize')
+        } catch (error) {
+          console.error('Erreur lors du parsing de l\'email:', error)
+        }
       }
     }
   }, [searchParams])
