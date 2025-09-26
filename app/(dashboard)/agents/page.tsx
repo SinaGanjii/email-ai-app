@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, ChevronDown, Mic, Sparkles, Book as Broom, Reply, FileText } from "lucide-react"
@@ -21,12 +22,78 @@ interface Message {
 }
 
 export default function AgentsPage() {
+  const searchParams = useSearchParams()
   const [selectedAgent, setSelectedAgent] = useState("auto")
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+
+  // Initialiser l'agent depuis l'URL et récupérer l'email depuis sessionStorage
+  useEffect(() => {
+    const agentFromUrl = searchParams.get('agent')
+    if (agentFromUrl) {
+      setSelectedAgent(agentFromUrl)
+    }
+
+    // Récupérer l'email depuis sessionStorage
+    const emailData = sessionStorage.getItem('emailToSummarize')
+    if (emailData) {
+      try {
+        const email = JSON.parse(emailData)
+        // Déclencher automatiquement le résumé
+        handleAutoSummarize(email)
+        // Nettoyer sessionStorage après récupération
+        sessionStorage.removeItem('emailToSummarize')
+      } catch (error) {
+        console.error('Erreur lors du parsing de l\'email:', error)
+      }
+    }
+  }, [searchParams])
+
+  const handleAutoSummarize = async (email: any) => {
+    setIsLoading(true)
+    
+    // Message utilisateur automatique
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: `Résumer cet email : "${email.subject}"`,
+      sender: "user",
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, userMessage])
+
+    try {
+      const { summarizeEmail } = await import('@/lib/emailSummarizer')
+      console.log('📧 Email to summarize:', { subject: email.subject, bodyLength: email.body?.length })
+      const result = await summarizeEmail(email.body)
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: result.success 
+          ? (result.summary || '').includes('error in your input') || (result.summary || '').includes('Summary generated successfully') || (result.summary || '').includes('not formatted correctly') || (result.summary || '').includes('not in a format') || (result.summary || '').includes('formatted incorrectly') || (result.summary || '').includes('pas reçu d\'email')
+            ? `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n**Contenu :**\n${email.body.substring(0, 300)}${email.body.length > 300 ? '...' : ''}\n\n⚠️ *L'API n8n a renvoyé une erreur, affichage du contenu original*`
+            : `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n---\n\n**📝 RÉSUMÉ :**\n\n${result.summary || 'Aucun résumé disponible'}\n\n---`
+          : `❌ Erreur lors du résumé : ${result.error}`,
+        sender: "ai",
+        agent: "summary",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "❌ Une erreur s'est produite lors du résumé.",
+        sender: "ai",
+        agent: "summary",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleSendMessage = async () => {
     if (!message.trim()) return
@@ -42,11 +109,20 @@ export default function AgentsPage() {
     setMessage("")
     setIsLoading(true)
 
-    // Simulate AI response
+
+    // Simulate AI response for other agents
     setTimeout(() => {
+      let responseContent = ""
+      
+      if (selectedAgent === "summary") {
+        responseContent = "🚧 **Version MVP** - L'agent de résumé fonctionne uniquement avec l'icône de résumé 📝 dans la liste des emails. Pour l'instant, les messages directs ne sont pas pris en charge."
+      } else {
+        responseContent = `I'm the ${agents.find((a) => a.id === selectedAgent)?.name} agent. I've processed your message: "${userMessage.content}". How can I help you further?`
+      }
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `I'm the ${agents.find((a) => a.id === selectedAgent)?.name} agent. I've processed your message: "${userMessage.content}". How can I help you further?`,
+        content: responseContent,
         sender: "ai",
         agent: selectedAgent,
         timestamp: new Date(),

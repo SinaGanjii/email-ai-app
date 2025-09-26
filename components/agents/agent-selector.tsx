@@ -30,7 +30,7 @@ const agents: Agent[] = [
     id: "summary",
     name: "Summary Agent",
     icon: "📑",
-    description: "Conversation summaries and insights",
+    description: "Summarize emails and extract key information",
     color: "bg-green-500/10 text-green-500 border-green-500/20",
   },
   {

@@ -1,10 +1,12 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useEmailActions as useEmailActionsHook } from "@/hooks/useEmailActions"
 import { useEmailCache } from "@/hooks/useEmailCache"
 
 export function useEmailTableActions() {
-  const { updateEmail, refreshEmails } = useEmailCache()
+  const router = useRouter()
+  const { updateEmail, refreshEmails, emails } = useEmailCache()
   const { 
     deleteEmails: deleteEmailsAction, 
     archiveEmails: archiveEmailsAction, 
@@ -150,7 +152,22 @@ export function useEmailTableActions() {
   }
 
   const handleAgentAction = (emailId: string, agent: string) => {
-    // Agent action placeholder
+    // Trouver l'email sélectionné
+    const email = emails.find(e => e.id === emailId)
+    if (!email) return
+
+    const emailData = {
+      id: email.id,
+      subject: email.subject || 'Sans objet',
+      body: email.body || '',
+      from: email.from_name || email.from_email || 'Expéditeur inconnu'
+    }
+
+    // Stocker l'email dans sessionStorage pour le passer à la page agents
+    sessionStorage.setItem('emailToSummarize', JSON.stringify(emailData))
+
+    // Naviguer vers la page agents avec l'agent sélectionné
+    router.push(`/agents?agent=${agent}`)
   }
 
   return {

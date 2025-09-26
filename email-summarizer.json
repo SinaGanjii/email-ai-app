@@ -1,0 +1,76 @@
+{
+  "name": "Email Summarizer",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "summarize-email",
+        "options": {}
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "mode": "json",
+        "json": {
+          "email_content": "={{$json.body.email_content}}"
+        }
+      },
+      "id": "Edit Fields",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "chat",
+        "model": "gpt-4",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Tu es une IA experte en communication professionnelle. Résume les emails en français en un maximum de 3 phrases claires et concises. Conserve uniquement les informations essentielles : objet du message, actions demandées, dates ou lieux importants. Évite les formules de politesse et ne traduis jamais, garde le texte en français."
+          },
+          {
+            "role": "user",
+            "content": "Résume cet email : {{$json.email_content}}"
+          }
+        ]
+      },
+      "id": "OpenAI",
+      "name": "Message a model",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [600, 300],
+      "credentials": {
+        "openAiApi": "OpenAi account 2"
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ summary: $json.choices[0].message.content }) }}"
+      },
+      "id": "Respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]]
+    },
+    "Edit Fields": {
+      "main": [[{ "node": "Message a model", "type": "main", "index": 0 }]]
+    },
+    "Message a model": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Send, Loader2 } from "lucide-react"
 import type { Agent } from "./agent-selector"
+import { summarizeEmail, cleanEmailContent } from "@/lib/emailSummarizer"
 
 interface Message {
   id: string
@@ -21,9 +22,15 @@ interface Message {
 interface ChatInterfaceProps {
   selectedAgent: string
   agents: Agent[]
+  emailToSummarize?: {
+    id: string
+    subject: string
+    body: string
+    from: string
+  }
 }
 
-export function ChatInterface({ selectedAgent, agents }: ChatInterfaceProps) {
+export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -46,6 +53,26 @@ export function ChatInterface({ selectedAgent, agents }: ChatInterfaceProps) {
     }
   }, [messages])
 
+  // Auto-summarize when email is provided and summary agent is selected
+  useEffect(() => {
+    console.log('🔍 Auto-summarize effect triggered:', { selectedAgent, emailToSummarize, messagesLength: messages.length })
+    if (selectedAgent === "summary" && emailToSummarize && messages.length === 1) {
+      console.log('📧 Starting auto-summarize for email:', emailToSummarize.subject)
+      const autoMessage: Message = {
+        id: Date.now().toString(),
+        content: `Résumer cet email : "${emailToSummarize.subject}"`,
+        sender: "user",
+        timestamp: new Date().toISOString(),
+      }
+      setMessages((prev) => [...prev, autoMessage])
+      // Déclencher automatiquement le résumé
+      setTimeout(() => {
+        console.log('🚀 Triggering auto-summarize...')
+        handleSendMessage()
+      }, 500)
+    }
+  }, [selectedAgent, emailToSummarize])
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return
 
@@ -60,18 +87,58 @@ export function ChatInterface({ selectedAgent, agents }: ChatInterfaceProps) {
     setInputValue("")
     setIsLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      const agentResponse: Message = {
+    try {
+      let agentResponse: Message
+
+      if (selectedAgent === "summary" && emailToSummarize) {
+        console.log('🤖 Calling summarize API for email:', emailToSummarize.subject)
+        // Appeler l'agent de résumé réel
+        const cleanedContent = cleanEmailContent(emailToSummarize.body)
+        console.log('📝 Cleaned content length:', cleanedContent.length)
+        const result = await summarizeEmail(cleanedContent)
+        console.log('📊 Summarize API result:', result)
+        
+        if (result.success) {
+          agentResponse = {
+            id: (Date.now() + 1).toString(),
+            content: `📧 **Email :** ${emailToSummarize.subject}\n\n**De :** ${emailToSummarize.from}\n\n---\n\n**📝 RÉSUMÉ :**\n\n${result.summary}\n\n---`,
+            sender: "agent",
+            timestamp: new Date().toISOString(),
+            agentType: selectedAgent,
+          }
+        } else {
+          agentResponse = {
+            id: (Date.now() + 1).toString(),
+            content: `❌ Erreur lors du résumé : ${result.error}`,
+            sender: "agent",
+            timestamp: new Date().toISOString(),
+            agentType: selectedAgent,
+          }
+        }
+      } else {
+        // Réponse simulée pour les autres agents
+        agentResponse = {
+          id: (Date.now() + 1).toString(),
+          content: getAgentResponse(selectedAgent, inputValue),
+          sender: "agent",
+          timestamp: new Date().toISOString(),
+          agentType: selectedAgent,
+        }
+      }
+
+      setMessages((prev) => [...prev, agentResponse])
+    } catch (error) {
+      const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: getAgentResponse(selectedAgent, inputValue),
+        content: "❌ Une erreur s'est produite. Veuillez réessayer.",
         sender: "agent",
         timestamp: new Date().toISOString(),
         agentType: selectedAgent,
       }
-      setMessages((prev) => [...prev, agentResponse])
+      setMessages((prev) => [...prev, errorResponse])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const getAgentResponse = (agentId: string, userInput: string): string => {
@@ -81,7 +148,7 @@ export function ChatInterface({ selectedAgent, agents }: ChatInterfaceProps) {
       reply:
         "I can help you craft a professional response. Based on the context, here's a suggested reply that maintains a professional tone while addressing all key points mentioned.",
       summary:
-        "I've reviewed the conversation thread and can provide a comprehensive summary. The main topics discussed include project updates, meeting schedules, and action items for the team.",
+        "🚧 **Version MVP** - L'agent de résumé fonctionne uniquement avec l'icône de résumé 📝 dans la liste des emails. Pour l'instant, les messages directs ne sont pas pris en charge.",
       auto: "I'm analyzing your request and will automatically select the best approach. Based on the content, I recommend using the Smart Reply agent for this task.",
     }
     return responses[agentId as keyof typeof responses] || "I'm here to help with your email management needs."
