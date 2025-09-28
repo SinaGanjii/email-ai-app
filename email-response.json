@@ -1,9 +1,9 @@
 {
-  "name": "Email Summarizer",
+  "name": "Email Response",
   "nodes": [
     {
       "parameters": {
-        "path": "summarize-email",
+        "path": "response-email",
         "options": {}
       },
       "id": "Webhook",
@@ -33,11 +33,11 @@
         "messages": [
           {
             "role": "system",
-            "content": "Tu es une IA experte en communication professionnelle. Résume les emails en français en un maximum de 3 phrases claires et concises. Conserve uniquement les informations essentielles : objet du message, actions demandées, dates ou lieux importants. Évite les formules de politesse et ne traduis jamais, garde le texte en français."
+            "content": "Tu es une IA experte en communication professionnelle. Ta tâche est de rédiger la réponse à l'email à la place de **Sina Ganji**. Écris directement la réponse en français, comme si Sina répondait à l'expéditeur. Sois clair, concis et précis : réponds uniquement aux informations demandées, confirmations, explications ou actions à entreprendre. N'ajoute jamais de politesse inutile, ne traduis jamais, et ne parle pas de toi-même (tu n'es pas l'expéditeur, tu es la voix de Sina)."
           },
           {
             "role": "user",
-            "content": "Résume cet email : {{$json.email_content}}"
+            "content": "Rédige une réponse à cet email : {{$json.email_content}}"
           }
         ]
       },
@@ -53,7 +53,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"summary\": JSON.stringify($json.choices[0].message.content) } }}"
+        "responseBody": "={{ { \"response\": JSON.stringify($json.choices[0].message.content) } }}"
       },
       "id": "Respond",
       "name": "Respond to Webhook",
