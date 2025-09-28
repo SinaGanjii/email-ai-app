@@ -47,8 +47,12 @@ export default function AgentsPage() {
       if (emailData) {
         try {
           const email = JSON.parse(emailData)
-          // Déclencher automatiquement le résumé
-          handleAutoSummarize(email)
+          // Déclencher automatiquement l'action selon l'agent sélectionné
+          if (agentFromUrl === 'smart-reply') {
+            handleAutoResponse(email)
+          } else {
+            handleAutoSummarize(email)
+          }
           // Nettoyer sessionStorage après récupération
           sessionStorage.removeItem('emailToSummarize')
         } catch (error) {
@@ -71,7 +75,6 @@ export default function AgentsPage() {
     setMessages((prev) => [...prev, userMessage])
 
     try {
-      console.log('📧 Email to summarize:', { subject: email.subject, bodyLength: email.body?.length })
       
       const res = await fetch("/api/summarize", {
         method: "POST",
@@ -99,6 +102,54 @@ export default function AgentsPage() {
         content: "❌ Une erreur s'est produite lors du résumé.",
         sender: "ai",
         agent: "summary",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAutoResponse = async (email: any) => {
+    setIsLoading(true)
+    
+    // Message utilisateur automatique
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: `Générer une réponse pour cet email : "${email.subject}"`,
+      sender: "user",
+      timestamp: new Date(),
+    }
+    setMessages((prev) => [...prev, userMessage])
+
+    try {
+      
+      const res = await fetch("/api/response", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.body }),
+      })
+      
+      const result = await res.json()
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: result.success 
+          ? (result.response || '').includes('error in your input') || (result.response || '').includes('Response generated successfully') || (result.response || '').includes('not formatted correctly') || (result.response || '').includes('not in a format') || (result.response || '').includes('formatted incorrectly') || (result.response || '').includes('pas reçu d\'email')
+            ? `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n**Contenu :**\n${email.body.substring(0, 300)}${email.body.length > 300 ? '...' : ''}\n\n⚠️ *L'API n8n a renvoyé une erreur, affichage du contenu original*`
+            : `📧 **Email :** ${email.subject}\n\n**De :** ${email.from}\n\n---\n\n**💬 RÉPONSE GÉNÉRÉE :**\n\n${result.response || 'Aucune réponse générée'}\n\n---`
+          : `❌ Erreur lors de la génération de réponse : ${result.error}`,
+        sender: "ai",
+        agent: "smart-reply",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "❌ Une erreur s'est produite lors de la génération de réponse.",
+        sender: "ai",
+        agent: "smart-reply",
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])

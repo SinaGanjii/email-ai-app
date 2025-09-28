@@ -96,11 +96,9 @@ export async function POST(request: NextRequest) {
 
 async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: string[]) {
   try {
-    console.log('🗑️ Starting delete emails process for:', emailIds)
     const results = []
 
     for (const emailId of emailIds) {
-      console.log('Processing email ID for deletion:', emailId)
 
       // Get email details from database
       const { data: email, error: emailError } = await supabase
@@ -109,7 +107,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
         .eq('id', emailId)
         .single()
 
-      console.log('Email data for deletion:', email, 'Error:', emailError)
 
       if (emailError) {
         console.error('Error fetching email for deletion:', emailError)
@@ -118,17 +115,13 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
       }
 
       if (email?.gmail_id) {
-        console.log('Email found, is_in_trash:', email.is_in_trash)
         
         try {
           // Pour les emails existants, considérer is_in_trash comme false si null/undefined
           const isInTrash = email.is_in_trash === true
-          console.log('Raw is_in_trash value:', email.is_in_trash)
-          console.log('Final is_in_trash status:', isInTrash)
           
           // Si l'email n'est pas explicitement en corbeille, le mettre en corbeille
           if (!isInTrash) {
-            console.log('Email not in trash - moving to trash (soft delete)')
             
             try {
               // Essayer de mettre en corbeille Gmail
@@ -137,7 +130,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
                   userId: 'me',
                   id: email.gmail_id
                 })
-                console.log('Successfully moved to Gmail trash')
               } else {
                 console.warn('Gmail client not available, skipping Gmail update')
               }
@@ -146,7 +138,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
             }
 
             // Update database - move to trash (soft delete)
-            console.log('Updating database for email:', emailId)
             const { error: updateError } = await supabase
               .from('messages')
               .update({ 
@@ -156,25 +147,21 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
               })
               .eq('id', emailId)
 
-            console.log('Database update result:', { updateError })
 
             if (updateError) {
               console.error('Move to trash error:', updateError)
               results.push({ emailId, success: false, error: `Move to trash failed: ${updateError.message}` })
             } else {
-              console.log('Successfully moved email to trash in database')
               results.push({ emailId, success: true, action: 'move_to_trash' })
             }
           } else {
             // Already in trash - permanent delete (hard delete)
-            console.log('Email already in trash - performing permanent delete')
             
             try {
               await gmailClient.users.messages.delete({
                 userId: 'me',
                 id: email.gmail_id
               })
-              console.log('Successfully deleted from Gmail')
             } catch (gmailError) {
               console.warn('Gmail delete failed, continuing with DB update:', gmailError)
             }
@@ -193,7 +180,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
               console.error('Permanent delete error:', updateError)
               results.push({ emailId, success: false, error: `Permanent delete failed: ${updateError.message}` })
             } else {
-              console.log('Successfully marked email as permanently deleted')
               results.push({ emailId, success: true, action: 'permanent_delete' })
             }
           }
@@ -207,7 +193,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
       }
     }
 
-    console.log('Delete emails process completed. Results:', results)
     return NextResponse.json({
       success: true,
       message: `Processed ${results.filter(r => r.success).length} emails`,

@@ -55,9 +55,7 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
 
   // Auto-summarize when email is provided and summary agent is selected
   useEffect(() => {
-    console.log('🔍 Auto-summarize effect triggered:', { selectedAgent, emailToSummarize, messagesLength: messages.length })
     if (selectedAgent === "summary" && emailToSummarize && messages.length === 1) {
-      console.log('📧 Starting auto-summarize for email:', emailToSummarize.subject)
       const autoMessage: Message = {
         id: Date.now().toString(),
         content: `Résumer cet email : "${emailToSummarize.subject}"`,
@@ -67,7 +65,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
       setMessages((prev) => [...prev, autoMessage])
       // Déclencher automatiquement le résumé
       setTimeout(() => {
-        console.log('🚀 Triggering auto-summarize...')
         handleSendMessage()
       }, 500)
     }
@@ -91,12 +88,9 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
       let agentResponse: Message
 
       if (selectedAgent === "summary" && emailToSummarize) {
-        console.log('🤖 Calling summarize API for email:', emailToSummarize.subject)
         // Appeler l'agent de résumé réel
         const cleanedContent = cleanEmailContent(emailToSummarize.body)
-        console.log('📝 Cleaned content length:', cleanedContent.length)
         const result = await summarizeEmail(cleanedContent)
-        console.log('📊 Summarize API result:', result)
         
         if (result.success) {
           agentResponse = {

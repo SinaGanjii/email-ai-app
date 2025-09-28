@@ -65,7 +65,6 @@ export default function ComposePage() {
         originalEmailId: originalEmailId
       }, {
         onSuccess: () => {
-          console.log('Réponse envoyée avec succès')
           router.back()
         },
         onError: (error) => {
@@ -82,7 +81,6 @@ export default function ComposePage() {
         bcc: formData.bcc
       }, {
         onSuccess: () => {
-          console.log('Email envoyé avec succès')
           router.back()
         },
         onError: (error) => {

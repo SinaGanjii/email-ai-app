@@ -18,7 +18,6 @@ export interface SummarizeEmailResponse {
 export async function summarizeEmail(emailBody: string): Promise<SummarizeEmailResponse> {
   try {
     const cleanedBody = cleanEmailContent(emailBody)
-    console.log('📤 Sending to n8n:', { email_content: cleanedBody })
     
     const response = await fetch(
       'https://sisis012.app.n8n.cloud/webhook/summarize-email',
@@ -37,7 +36,6 @@ export async function summarizeEmail(emailBody: string): Promise<SummarizeEmailR
     }
 
     const data = await response.json()
-    console.log('📊 API Response:', data)
 
     const summary =
       data.content ||

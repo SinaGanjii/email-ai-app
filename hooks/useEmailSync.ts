@@ -12,7 +12,6 @@ export function useEmailSync() {
         method: 'POST'
       })
       const result = await response.json()
-      console.log('Sync result:', result)
     } catch (error) {
       console.error('Sync error:', error)
     } finally {
