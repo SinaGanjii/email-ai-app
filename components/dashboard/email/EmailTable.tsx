@@ -43,6 +43,10 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     handleRestoreConfirm,
     toggleStar,
     toggleImportant,
+    handleDeleteEmail,
+    handleArchiveEmail,
+    handleAgentAction,
+    handleReply,
   } = useEmailTableActions()
 
   const { filterEmailsByFolder } = useEmailFilters()
@@ -97,16 +101,25 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
 
   // Si un email est sélectionné, afficher la vue email
   if (selectedEmail) {
+    // Trouver l'email actuel dans le cache pour avoir les données à jour
+    const currentEmail = emails.find(e => e.id === selectedEmail.id) || selectedEmail
+    
     return (
       <div className="flex flex-col w-full h-full bg-white">
         <EmailDetailHeader
-          selectedEmail={selectedEmail}
+          selectedEmail={currentEmail}
           onClose={closeEmail}
-          onToggleStar={() => toggleStar(selectedEmail.id, filteredEmails)}
+          onToggleStar={() => toggleStar(currentEmail.id, filteredEmails)}
+          onArchive={() => handleArchiveEmail(currentEmail.id, closeEmail)}
+          onDelete={() => handleDeleteEmail(currentEmail.id, closeEmail)}
+          onToggleImportant={() => toggleImportant(currentEmail.id, filteredEmails)}
+          onAgentAction={(agent) => handleAgentAction(currentEmail.id, agent)}
         />
         <EmailDetailContent
-          selectedEmail={selectedEmail}
-          onToggleStar={() => toggleStar(selectedEmail.id, filteredEmails)}
+          selectedEmail={currentEmail}
+          onToggleStar={() => toggleStar(currentEmail.id, filteredEmails)}
+          onReply={() => handleReply(currentEmail)}
+          onToggleImportant={() => toggleImportant(currentEmail.id, filteredEmails)}
         />
       </div>
     )

@@ -78,7 +78,7 @@ export function useEmailTableActions() {
     })
   }
 
-  const handleDeleteEmail = async (emailId: string) => {
+  const handleDeleteEmail = async (emailId: string, onSuccess?: () => void) => {
     // Optimistic update - mark as in trash instead of deleting
     updateEmail(emailId, { is_in_trash: true, is_deleted: false })
     
@@ -87,6 +87,7 @@ export function useEmailTableActions() {
       await deleteEmailsAction([emailId], {
         onSuccess: (data) => {
           // Email deleted successfully
+          onSuccess?.()
         },
         onError: (error) => {
           // Refresh emails to revert optimistic update
@@ -99,11 +100,12 @@ export function useEmailTableActions() {
     }
   }
 
-  const handleArchiveEmail = async (emailId: string) => {
+  const handleArchiveEmail = async (emailId: string, onSuccess?: () => void) => {
     // Real action
     await archiveEmailsAction([emailId], {
       onSuccess: () => {
         // Email archived successfully
+        onSuccess?.()
       },
       onError: (error) => {
         // Refresh emails to revert optimistic update
@@ -170,6 +172,22 @@ export function useEmailTableActions() {
     router.push(`/agents?agent=${agent}`)
   }
 
+  const handleReply = (email: any) => {
+    // Stocker l'email dans sessionStorage pour le passer au modal de réponse
+    const replyData = {
+      to: email.from_email,
+      subject: email.subject?.startsWith('Re: ') ? email.subject : `Re: ${email.subject || 'Sans objet'}`,
+      originalEmailId: email.id,
+      originalBody: email.body || ''
+    }
+    
+    sessionStorage.setItem('replyEmail', JSON.stringify(replyData))
+    
+    // Ouvrir le modal de réponse (vous devrez implémenter cette logique)
+    // Pour l'instant, on peut rediriger vers une page de composition
+    router.push('/compose?reply=true')
+  }
+
   return {
     toggleStar,
     toggleImportant,
@@ -180,5 +198,6 @@ export function useEmailTableActions() {
     handleRestoreConfirm,
     handleRestoreEmail,
     handleAgentAction,
+    handleReply,
   }
 }

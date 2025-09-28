@@ -49,7 +49,10 @@ export function SidebarManager({ state, actions, onComposeClick }: SidebarManage
           onMouseLeave={handleLeave}
         >
           <div className="p-3">
-            <Button className="w-full justify-start gap-2 mb-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg h-9">
+            <Button 
+              onClick={onComposeClick}
+              className="w-full justify-start gap-2 mb-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg h-9"
+            >
               <Pencil className="h-4 w-4" />
               Compose
             </Button>
@@ -91,6 +94,7 @@ export function SidebarManager({ state, actions, onComposeClick }: SidebarManage
       >
         <div className="p-4">
           <Button
+            onClick={onComposeClick}
             className="w-full justify-start gap-2 mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 border rounded-lg"
           >
             <Pencil className="h-4 w-4" />

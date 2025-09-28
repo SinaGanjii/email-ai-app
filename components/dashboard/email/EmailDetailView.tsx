@@ -1,16 +1,22 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Archive, Trash2, Flag, Printer, MoreHorizontal, Star, Reply, MoreVertical } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowLeft, Archive, Trash2, Star, Reply, Sparkles, MessageSquare, FileText } from "lucide-react"
 import { useEmailFilters } from "@/hooks/email/useEmailFilters"
+import { useState, useRef, useEffect } from "react"
 
 interface EmailDetailHeaderProps {
   selectedEmail: any
   onClose: () => void
   onToggleStar: () => void
+  onArchive: () => void
+  onDelete: () => void
+  onToggleImportant: () => void
+  onAgentAction: (agent: string) => void
 }
 
-export function EmailDetailHeader({ selectedEmail, onClose, onToggleStar }: EmailDetailHeaderProps) {
+export function EmailDetailHeader({ selectedEmail, onClose, onToggleStar, onArchive, onDelete, onToggleImportant, onAgentAction }: EmailDetailHeaderProps) {
   const { formatDate } = useEmailFilters()
 
   return (
@@ -25,26 +31,56 @@ export function EmailDetailHeader({ selectedEmail, onClose, onToggleStar }: Emai
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </Button>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100 rounded-full">
-            <Archive className="h-5 w-5 text-gray-600" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-purple-500/10 transition-colors"
+            onClick={() => onAgentAction("cleanup")}
+            title="Cleanup Agent"
+          >
+            <Sparkles className="h-4 w-4 text-purple-500" />
           </Button>
-          <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100 rounded-full">
-            <Trash2 className="h-5 w-5 text-gray-600" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-blue-500/10 transition-colors"
+            onClick={() => onAgentAction("smart-reply")}
+            title="Smart Reply Agent"
+          >
+            <MessageSquare className="h-4 w-4 text-blue-500" />
           </Button>
-          <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100 rounded-full">
-            <Flag className="h-5 w-5 text-gray-600" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 hover:bg-green-500/10 transition-colors"
+            onClick={() => onAgentAction("summary")}
+            title="Summary Agent"
+          >
+            <FileText className="h-4 w-4 text-green-500" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0 hover:bg-orange-500/10 transition-colors"
+            onClick={onArchive}
+            title="Archiver"
+          >
+            <Archive className="h-4 w-4 text-orange-500" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0 hover:bg-red-500/10 transition-colors"
+            onClick={onDelete}
+            title="Supprimer"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
           </Button>
         </div>
       </div>
       
       <div className="flex items-center gap-2 text-sm text-gray-500">
         <span>1 sur 1</span>
-        <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100 rounded-full">
-          <Printer className="h-5 w-5 text-gray-600" />
-        </Button>
-        <Button variant="ghost" size="sm" className="p-2 hover:bg-gray-100 rounded-full">
-          <MoreHorizontal className="h-5 w-5 text-gray-600" />
-        </Button>
       </div>
     </div>
   )
@@ -53,25 +89,50 @@ export function EmailDetailHeader({ selectedEmail, onClose, onToggleStar }: Emai
 interface EmailDetailContentProps {
   selectedEmail: any
   onToggleStar: () => void
+  onReply: () => void
+  onToggleImportant: () => void
 }
 
-export function EmailDetailContent({ selectedEmail, onToggleStar }: EmailDetailContentProps) {
+export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onToggleImportant }: EmailDetailContentProps) {
   const { formatDate, getEmailDisplayName, cleanHtmlContent } = useEmailFilters()
+  const [showReplyBox, setShowReplyBox] = useState(false)
+  const [showOriginalEmail, setShowOriginalEmail] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const replyBoxRef = useRef<HTMLDivElement>(null)
+
+  // Scroll vers la boîte de réponse quand elle s'ouvre
+  useEffect(() => {
+    if (showReplyBox && replyBoxRef.current) {
+      setTimeout(() => {
+        replyBoxRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        })
+      }, 100)
+    }
+  }, [showReplyBox])
 
   return (
     <>
       {/* Subject Line - Clean and Minimal */}
       <div className="px-6 py-4 border-b border-gray-100">
-        <h1 className="text-2xl font-normal text-gray-900 mb-2">
-          {selectedEmail.subject || '(Sans objet)'}
-        </h1>
-        <div className="flex items-center gap-3">
-          <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-            Boîte de réception
-          </span>
-          <span className="text-sm text-gray-500">
-            {formatDate(selectedEmail.sent_at || selectedEmail.received_at)}
-          </span>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-normal text-gray-900">
+            {selectedEmail.subject || '(Sans objet)'}
+          </h1>
+          <button
+            onClick={onToggleImportant}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+            title={selectedEmail.is_important ? "Marquer comme non important" : "Marquer comme important"}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 32 24"
+              className={`h-5 w-5 flex-shrink-0 ${selectedEmail.is_important ? "fill-yellow-500" : "fill-gray-400"}`}
+            >
+              <path d="M4 4h13l8 8-8 8H4l8-8-8-8z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -108,11 +169,14 @@ export function EmailDetailContent({ selectedEmail, onToggleStar }: EmailDetailC
               >
                 <Star className={`h-4 w-4 ${selectedEmail.is_starred ? "fill-current" : ""}`} />
               </Button>
-              <Button variant="ghost" size="sm" className="p-1 text-gray-400 hover:text-gray-600">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-1 text-gray-400 hover:text-gray-600"
+                onClick={() => setShowReplyBox(!showReplyBox)}
+                title="Répondre"
+              >
                 <Reply className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-1 text-gray-400 hover:text-gray-600">
-                <MoreVertical className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -137,6 +201,88 @@ export function EmailDetailContent({ selectedEmail, onToggleStar }: EmailDetailC
             </div>
           </div>
 
+          {/* Reply Box - Gmail Style */}
+          {showReplyBox && (
+            <div ref={replyBoxRef} className="mt-6 border-t border-gray-200 pt-6">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                {/* Reply Header */}
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700">Répondre à {getEmailDisplayName(selectedEmail)}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowOriginalEmail(!showOriginalEmail)}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      {showOriginalEmail ? 'Masquer' : 'Afficher'} le message original
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Original Email (Collapsible) */}
+                {showOriginalEmail && (
+                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                    <div className="text-xs text-gray-600 mb-2">Message original :</div>
+                    <div className="text-sm text-gray-700 max-h-32 overflow-y-auto">
+                      {selectedEmail.body ? (
+                        <div className="whitespace-pre-wrap">
+                          {selectedEmail.body}
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 italic">
+                          Contenu non disponible
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Reply Text Area */}
+                <div className="p-4">
+                  <Textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Tapez votre réponse ici..."
+                    rows={6}
+                    className="border-0 resize-none focus:ring-0 text-sm"
+                  />
+                </div>
+
+                {/* Reply Actions */}
+                <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowReplyBox(false)}
+                        className="text-xs"
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          // Ici on peut appeler la fonction de réponse
+                          console.log('Envoi de la réponse:', replyText)
+                          setShowReplyBox(false)
+                          setReplyText('')
+                        }}
+                        className="text-xs"
+                      >
+                        Envoyer
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
