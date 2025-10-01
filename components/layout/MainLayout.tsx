@@ -19,13 +19,11 @@ export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname()
   const previousPathnameRef = useRef<string>(pathname)
 
-  // When pathname changes, reset navigation freeze
   useEffect(() => {
     if (pathname !== previousPathnameRef.current) {
       previousPathnameRef.current = pathname
       
       if (state.isNavigating) {
-        // Only reset isNavigating flag, don't interfere with overlay state
         actions.setIsNavigating(false)
       }
     }

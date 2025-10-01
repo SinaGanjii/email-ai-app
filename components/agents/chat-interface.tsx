@@ -53,7 +53,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
     }
   }, [messages])
 
-  // Auto-summarize when email is provided and summary agent is selected
   useEffect(() => {
     if (selectedAgent === "summary" && emailToSummarize && messages.length === 1) {
       const autoMessage: Message = {
@@ -63,7 +62,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
         timestamp: new Date().toISOString(),
       }
       setMessages((prev) => [...prev, autoMessage])
-      // Déclencher automatiquement le résumé
       setTimeout(() => {
         handleSendMessage()
       }, 500)
@@ -88,7 +86,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
       let agentResponse: Message
 
       if (selectedAgent === "summary" && emailToSummarize) {
-        // Appeler l'agent de résumé réel
         const cleanedContent = cleanEmailContent(emailToSummarize.body)
         const result = await summarizeEmail(cleanedContent)
         
@@ -110,7 +107,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
           }
         }
       } else {
-        // Réponse simulée pour les autres agents
         agentResponse = {
           id: (Date.now() + 1).toString(),
           content: getAgentResponse(selectedAgent, inputValue),
@@ -161,7 +157,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
 
   return (
     <div className="flex flex-col h-full">
-      {/* Chat Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{currentAgent?.icon}</span>
@@ -172,7 +167,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
         </div>
       </div>
 
-      {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
@@ -225,7 +219,6 @@ export function ChatInterface({ selectedAgent, agents, emailToSummarize }: ChatI
         </div>
       </ScrollArea>
 
-      {/* Input Area */}
       <div className="p-4 border-t border-border bg-card">
         <div className="flex gap-2">
           <Textarea

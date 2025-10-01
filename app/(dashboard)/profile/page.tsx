@@ -18,7 +18,6 @@ export default function ProfilePage() {
     setSigningOut(true)
     try {
       await signOut()
-      // Redirection immédiate pour éviter l'état intermédiaire
       router.push("/auth/login")
     } catch (error) {
       console.error("Error signing out:", error)
@@ -82,9 +81,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        {/* Mobile Layout: Vertical Stack */}
         <div className="flex flex-col space-y-6 lg:hidden">
-          {/* Avatar and Basic Info */}
           <div className="flex flex-col items-center text-center space-y-4 p-6 rounded-lg bg-card border">
             <Avatar className="h-20 w-20 border-2 border-border">
               <AvatarImage src={user.avatar_url || ""} alt={user.full_name ?? "User"} />
@@ -103,7 +100,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Account Details */}
           <div className="space-y-4 p-6 rounded-lg bg-card border">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Shield className="h-5 w-5" />
@@ -137,9 +133,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Desktop Layout: Two Column Grid */}
         <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8">
-          {/* Left Column: Avatar and Basic Info */}
           <div className="flex flex-col items-center text-center space-y-6 p-8 rounded-lg bg-card border">
             <Avatar className="h-24 w-24 border-2 border-border">
               <AvatarImage src={user.avatar_url || ""} alt={user.full_name ?? "User"} />
@@ -158,7 +152,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Right Column: Account Details */}
           <div className="space-y-6 p-8 rounded-lg bg-card border">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <Shield className="h-5 w-5" />

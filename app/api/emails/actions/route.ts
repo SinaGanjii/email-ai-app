@@ -6,10 +6,8 @@ import { createGmailClient, validateGmailToken } from '@/lib/gmail'
 
 export async function POST(request: NextRequest) {
   try {
-    // Create Supabase client with proper auth handling
     const supabaseAuth = createRouteHandlerClient({ cookies })
     
-    // Get session first
     const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession()
     
     if (sessionError || !session) {
@@ -19,7 +17,6 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Create a new client with mail schema using the session token
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,7 +30,6 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    // Validate Gmail token
     const providerToken = session.provider_token
     const providerRefreshToken = session.provider_refresh_token
     
@@ -44,10 +40,7 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    // Create Gmail client
     const gmailClient = createGmailClient(providerToken, providerRefreshToken ?? undefined)
-
-    // Parse request body
     const { actionType, emailIds, emailData } = await request.json()
 
     switch (actionType) {
@@ -100,7 +93,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
 
     for (const emailId of emailIds) {
 
-      // Get email details from database
       const { data: email, error: emailError } = await supabase
         .from('messages')
         .select('gmail_id, is_in_trash, is_deleted, subject')
@@ -117,14 +109,11 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
       if (email?.gmail_id) {
         
         try {
-          // Pour les emails existants, considérer is_in_trash comme false si null/undefined
           const isInTrash = email.is_in_trash === true
           
-          // Si l'email n'est pas explicitement en corbeille, le mettre en corbeille
           if (!isInTrash) {
             
             try {
-              // Essayer de mettre en corbeille Gmail
               if (gmailClient && gmailClient.users && gmailClient.users.messages) {
                 await gmailClient.users.messages.trash({
                   userId: 'me',
@@ -137,12 +126,11 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
               console.warn('Gmail trash failed, continuing with DB update:', gmailError)
             }
 
-            // Update database - move to trash (soft delete)
             const { error: updateError } = await supabase
               .from('messages')
               .update({ 
                 is_in_trash: true, 
-                is_deleted: false,  // Pas encore supprimé définitivement
+                is_deleted: false,  
                 deleted_at: new Date().toISOString()
               })
               .eq('id', emailId)
@@ -155,7 +143,6 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
               results.push({ emailId, success: true, action: 'move_to_trash' })
             }
           } else {
-            // Already in trash - permanent delete (hard delete)
             
             try {
               await gmailClient.users.messages.delete({
@@ -166,13 +153,12 @@ async function handleDeleteEmails(gmailClient: any, supabase: any, emailIds: str
               console.warn('Gmail delete failed, continuing with DB update:', gmailError)
             }
 
-            // Mark as permanently deleted in database (hard delete)
             const { error: updateError } = await supabase
               .from('messages')
               .update({ 
-                is_deleted: true,  // Marqué comme supprimé définitivement
-                is_in_trash: true, // Reste en corbeille pour audit
-                deleted_at: email.deleted_at || new Date().toISOString() // Garde la date originale
+                is_deleted: true,  
+                is_in_trash: true, 
+                deleted_at: email.deleted_at || new Date().toISOString()
               })
               .eq('id', emailId)
 
@@ -213,7 +199,6 @@ async function handleArchiveEmails(gmailClient: any, supabase: any, emailIds: st
     const results = []
     
     for (const emailId of emailIds) {
-      // Get Gmail ID from database
       const { data: email } = await supabase
         .from('messages')
         .select('gmail_id')
@@ -221,7 +206,6 @@ async function handleArchiveEmails(gmailClient: any, supabase: any, emailIds: st
         .single()
 
       if (email?.gmail_id) {
-        // Archive in Gmail (remove INBOX label)
         await gmailClient.users.messages.modify({
           userId: 'me',
           id: email.gmail_id,
@@ -230,7 +214,6 @@ async function handleArchiveEmails(gmailClient: any, supabase: any, emailIds: st
           }
         })
 
-        // Update database
         await supabase
           .from('messages')
           .update({ is_archived: true })
@@ -261,7 +244,6 @@ async function handleStarEmails(gmailClient: any, supabase: any, emailIds: strin
     const results = []
     
     for (const emailId of emailIds) {
-      // Get current starred status
       const { data: email, error: emailError } = await supabase
         .from('messages')
         .select('is_starred')
@@ -276,7 +258,6 @@ async function handleStarEmails(gmailClient: any, supabase: any, emailIds: strin
       if (email) {
         const newStarredStatus = !email.is_starred
         
-        // Update database only (no Gmail interaction)
         const { error: updateError } = await supabase
           .from('messages')
           .update({ is_starred: newStarredStatus })
@@ -311,7 +292,6 @@ async function handleMarkAsRead(gmailClient: any, supabase: any, emailIds: strin
     const results = []
     
     for (const emailId of emailIds) {
-      // Get Gmail ID from database
       const { data: email } = await supabase
         .from('messages')
         .select('gmail_id')
@@ -319,7 +299,6 @@ async function handleMarkAsRead(gmailClient: any, supabase: any, emailIds: strin
         .single()
 
       if (email?.gmail_id) {
-        // Mark as read in Gmail (remove UNREAD label)
         await gmailClient.users.messages.modify({
           userId: 'me',
           id: email.gmail_id,
@@ -328,7 +307,6 @@ async function handleMarkAsRead(gmailClient: any, supabase: any, emailIds: strin
           }
         })
 
-        // Update database
         await supabase
           .from('messages')
           .update({ is_read: true })
@@ -359,7 +337,6 @@ async function handleToggleImportant(supabase: any, emailIds: string[]) {
     const results = []
     
     for (const emailId of emailIds) {
-      // Get current important status
       const { data: email } = await supabase
         .from('messages')
         .select('is_important')
@@ -367,7 +344,6 @@ async function handleToggleImportant(supabase: any, emailIds: string[]) {
         .single()
 
       if (email) {
-        // Toggle important status (only in database, no Gmail sync)
         const newImportantStatus = !email.is_important
         
         await supabase
@@ -403,11 +379,9 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
   try {
     const { to, subject, body, cc, bcc, replyTo } = emailData
 
-    // Get user's email from Gmail profile
     const profile = await gmailClient.getProfile()
     const userEmail = profile.data.emailAddress
 
-    // Create email message with proper headers
     const message = [
       `From: ${userEmail}`,
       `To: ${to}`,
@@ -422,7 +396,6 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
       body
     ].filter(Boolean).join('\n')
 
-    // Send email via Gmail API
     const response = await gmailClient.sendMessage({
       userId: 'me',
       requestBody: {
@@ -430,14 +403,12 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
       }
     })
 
-    // Get the sent message details from Gmail to sync properly
     const sentMessage = await gmailClient.getMessage({
       userId: 'me',
       id: response.data.id,
       format: 'full'
     })
 
-    // Store sent email in database with proper thread handling
     const { data: sentEmail, error: dbError } = await supabase
       .from('messages')
       .insert({
@@ -464,7 +435,6 @@ async function handleSendEmail(gmailClient: any, supabase: any, emailData: any, 
       throw new Error(`Database error: ${dbError.message}`)
     }
 
-    // Add SENT label to the message
     await supabase
       .from('message_labels')
       .insert({
@@ -496,7 +466,6 @@ async function handleReplyEmail(gmailClient: any, supabase: any, emailData: any)
   try {
     const { to, subject, body, originalEmailId } = emailData
 
-    // Get original email details
     const { data: originalEmail } = await supabase
       .from('messages')
       .select('gmail_id, subject, from_email, thread_id')
@@ -510,16 +479,13 @@ async function handleReplyEmail(gmailClient: any, supabase: any, emailData: any)
       }, { status: 404 })
     }
 
-    // Get user's email from Gmail profile
     const profile = await gmailClient.users.getProfile({ userId: 'me' })
     const userEmail = profile.data.emailAddress
 
-    // Create reply subject
     const replySubject = originalEmail.subject.startsWith('Re: ') 
       ? originalEmail.subject 
       : `Re: ${originalEmail.subject}`
 
-    // Create reply message with proper headers
     const message = [
       `From: ${userEmail}`,
       `To: ${originalEmail.from_email}`,
@@ -532,7 +498,6 @@ async function handleReplyEmail(gmailClient: any, supabase: any, emailData: any)
       body
     ].join('\n')
 
-    // Send reply via Gmail API
     const response = await gmailClient.users.messages.send({
       userId: 'me',
       requestBody: {
@@ -540,7 +505,6 @@ async function handleReplyEmail(gmailClient: any, supabase: any, emailData: any)
       }
     })
 
-    // Store reply in database
     const { data: replyEmail } = await supabase
       .from('messages')
       .insert({
@@ -580,7 +544,6 @@ async function handleForwardEmail(gmailClient: any, supabase: any, emailData: an
   try {
     const { to, subject, body, originalEmailId } = emailData
 
-    // Get original email details
     const { data: originalEmail } = await supabase
       .from('messages')
       .select('gmail_id, subject, body, from_email, from_name')
@@ -594,16 +557,13 @@ async function handleForwardEmail(gmailClient: any, supabase: any, emailData: an
       }, { status: 404 })
     }
 
-    // Get user's email from Gmail profile
     const profile = await gmailClient.users.getProfile({ userId: 'me' })
     const userEmail = profile.data.emailAddress
 
-    // Create forward subject
     const forwardSubject = originalEmail.subject.startsWith('Fwd: ') 
       ? originalEmail.subject 
       : `Fwd: ${originalEmail.subject}`
 
-    // Create forward message
     const forwardedBody = `---------- Forwarded message ---------
 From: ${originalEmail.from_name || originalEmail.from_email}
 Date: ${new Date().toLocaleDateString()}
@@ -626,7 +586,6 @@ ${body}`
       forwardedBody
     ].join('\n')
 
-    // Send forward via Gmail API
     const response = await gmailClient.users.messages.send({
       userId: 'me',
       requestBody: {
@@ -634,7 +593,6 @@ ${body}`
       }
     })
 
-    // Store forward in database
     const { data: forwardEmail } = await supabase
       .from('messages')
       .insert({
@@ -674,7 +632,6 @@ async function handleRestoreEmails(gmailClient: any, supabase: any, emailIds: st
     const results = []
     
     for (const emailId of emailIds) {
-      // Get email details from database
       const { data: email, error: emailError } = await supabase
         .from('messages')
         .select('is_in_trash')
@@ -687,7 +644,6 @@ async function handleRestoreEmails(gmailClient: any, supabase: any, emailIds: st
       }
 
       if (email && email.is_in_trash) {
-        // Update database only (no Gmail interaction)
         const { error: updateError } = await supabase
           .from('messages')
           .update({ 

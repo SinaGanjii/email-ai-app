@@ -7,13 +7,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
-        {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Bienvenue sur Email AI</h1>
           <p className="text-gray-600">Votre assistant email intelligent avec Gmail</p>
         </div>
 
-        {/* Features */}
         <div className="grid grid-cols-1 gap-4">
           <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -36,7 +34,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Google Login */}
         <div className="space-y-4">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -52,7 +49,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="text-center space-y-3 pt-4 border-t border-gray-100">
           <p className="text-xs text-muted-foreground leading-relaxed">
             En vous connectant, vous acceptez nos{" "}

@@ -7,10 +7,8 @@ import { EmailParser } from '@/lib/emailParser'
 
 export async function POST(request: NextRequest) {
   try {
-    // Create Supabase client with proper auth handling
     const supabaseAuth = createRouteHandlerClient({ cookies })
     
-    // Get session first
     const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession()
     
     if (sessionError || !session) {
@@ -20,7 +18,6 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Create a new client with mail schema using the session token
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -34,7 +31,6 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    // Validate Gmail token
     const providerToken = session.provider_token
     const providerRefreshToken = session.provider_refresh_token
     
@@ -45,11 +41,9 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    // Create Gmail client and parser
     const gmailClient = createGmailClient(providerToken, providerRefreshToken ?? undefined)
     const emailParser = new EmailParser(gmailClient)
 
-    // Verify Gmail connection
     try {
       await gmailClient.getProfile()
     } catch (error) {
@@ -59,7 +53,6 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    // Fetch messages
     const messagesResponse = await gmailClient.listMessages({
       maxResults: 50,
       q: 'in:inbox OR in:sent'
@@ -73,7 +66,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Sync messages
     let syncedCount = 0
     const errors: string[] = []
 
@@ -117,7 +109,6 @@ export async function POST(request: NextRequest) {
 
 async function syncEmailToDatabase(supabase: any, userId: string, parsedEmail: any) {
   try {
-    // 1. Upsert thread
     const { data: threadData, error: threadError } = await supabase
       .from('threads')
       .upsert({
@@ -137,7 +128,6 @@ async function syncEmailToDatabase(supabase: any, userId: string, parsedEmail: a
       return { success: false, error: `Thread sync failed: ${threadError.message}` }
     }
 
-    // 2. Upsert message
     const { data: messageData, error: messageError } = await supabase
       .from('messages')
       .upsert({
@@ -170,10 +160,8 @@ async function syncEmailToDatabase(supabase: any, userId: string, parsedEmail: a
       return { success: false, error: `Message sync failed: ${messageError.message}` }
     }
 
-    // 3. Sync labels
     await syncLabels(supabase, userId, messageData.id, parsedEmail.labels)
 
-    // 4. Sync attachments
     await syncAttachments(supabase, messageData.id, parsedEmail.attachments)
 
     return { success: true }
@@ -185,7 +173,6 @@ async function syncEmailToDatabase(supabase: any, userId: string, parsedEmail: a
 
 async function syncLabels(supabase: any, userId: string, messageId: string, gmailLabels: string[]) {
   try {
-    // Ensure all labels exist in our database
     for (const labelName of gmailLabels) {
       await supabase
         .from('labels')
@@ -199,7 +186,6 @@ async function syncLabels(supabase: any, userId: string, messageId: string, gmai
         })
     }
 
-    // Get label IDs
     const { data: labels } = await supabase
       .from('labels')
       .select('id, name')
@@ -208,13 +194,11 @@ async function syncLabels(supabase: any, userId: string, messageId: string, gmai
 
     if (!labels?.length) return
 
-    // Clear existing message labels
     await supabase
       .from('message_labels')
       .delete()
       .eq('message_id', messageId)
 
-    // Insert new message labels
     await supabase
       .from('message_labels')
       .insert(
@@ -224,19 +208,16 @@ async function syncLabels(supabase: any, userId: string, messageId: string, gmai
         }))
       )
   } catch (error) {
-    // Label sync errors are non-critical, continue processing
   }
 }
 
 async function syncAttachments(supabase: any, messageId: string, attachments: any[]) {
   try {
-    // Clear existing attachments
     await supabase
       .from('attachments')
       .delete()
       .eq('message_id', messageId)
 
-    // Insert new attachments
     if (attachments.length > 0) {
       await supabase
         .from('attachments')
@@ -251,6 +232,5 @@ async function syncAttachments(supabase: any, messageId: string, attachments: an
         )
     }
   } catch (error) {
-    // Attachment sync errors are non-critical, continue processing
   }
 }

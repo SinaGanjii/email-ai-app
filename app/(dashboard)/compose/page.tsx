@@ -25,7 +25,6 @@ export default function ComposePage() {
   const [isReply, setIsReply] = useState(false)
 
   useEffect(() => {
-    // Vérifier si c'est une réponse
     const replyData = sessionStorage.getItem('replyEmail')
     if (replyData) {
       try {
@@ -39,7 +38,6 @@ export default function ComposePage() {
         })
         setOriginalEmailId(parsed.originalEmailId)
         setIsReply(true)
-        // Nettoyer le sessionStorage
         sessionStorage.removeItem('replyEmail')
       } catch (error) {
         console.error('Erreur lors du parsing des données de réponse:', error)
@@ -57,7 +55,6 @@ export default function ComposePage() {
     }
 
     if (isReply && originalEmailId) {
-      // Envoyer une réponse
       const result = await replyEmail({
         to: formData.to,
         subject: formData.subject,
@@ -72,7 +69,6 @@ export default function ComposePage() {
         }
       })
     } else {
-      // Envoyer un nouvel email
       const result = await sendEmail({
         to: formData.to,
         subject: formData.subject,
@@ -96,7 +92,6 @@ export default function ComposePage() {
 
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-4">
           <Button 
@@ -113,7 +108,6 @@ export default function ComposePage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-auto p-6">
         <Card className="w-full max-w-4xl mx-auto">
           <CardContent className="p-6">

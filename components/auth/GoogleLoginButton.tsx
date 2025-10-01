@@ -18,7 +18,6 @@ export function GoogleLoginButton({ redirectTo = '/dashboard' }: GoogleLoginButt
       await signInWithGoogle(redirectTo)
     } catch (error) {
       console.error("Google sign-in failed:", error)
-      // You could add a toast notification here for better UX
     } finally {
       setIsLoading(false)
     }

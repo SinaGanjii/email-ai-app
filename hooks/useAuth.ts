@@ -19,15 +19,12 @@ export function useAuth() {
   const router = useRouter()
 
   useEffect(() => {
-    // Vérification initiale optimisée avec cache
     checkAuth()
 
-    // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           try {
-            // Utiliser directement la session pour éviter l'appel API
             const rawUserMetaData = session.user.user_metadata || {}
             const appMetadata = session.user.app_metadata || {}
             
@@ -42,7 +39,6 @@ export function useAuth() {
             setAuthState({ user, loading: false, error: null })
           } catch (error: any) {
             if (error?.message !== 'Auth session missing!') {
-              // Error getting user after sign in
             }
             setAuthState({ user: null, loading: false, error: null })
           }
@@ -50,7 +46,6 @@ export function useAuth() {
           setAuthState({ user: null, loading: false, error: null })
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           try {
-            // Utiliser directement la session pour éviter l'appel API
             const rawUserMetaData = session.user.user_metadata || {}
             const appMetadata = session.user.app_metadata || {}
             
@@ -65,7 +60,6 @@ export function useAuth() {
             setAuthState({ user, loading: false, error: null })
           } catch (error: any) {
             if (error?.message !== 'Auth session missing!') {
-              // Error refreshing user data
             }
           }
         }
@@ -81,7 +75,6 @@ export function useAuth() {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }))
       
-      // Optimisation : timeout pour éviter les blocages en local
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Auth timeout')), 5000)
       )
@@ -99,7 +92,6 @@ export function useAuth() {
       }
       
       if (session?.user) {
-        // Créer l'objet user directement depuis la session (plus rapide)
         const rawUserMetaData = session.user.user_metadata || {}
         const appMetadata = session.user.app_metadata || {}
         
@@ -117,7 +109,6 @@ export function useAuth() {
       }
     } catch (error: any) {
       if (error?.message === 'Auth timeout') {
-        // En cas de timeout, essayer de continuer avec l'état actuel
         setAuthState({ user: null, loading: false, error: null })
       } else if (error?.message !== 'Auth session missing!') {
         setAuthState({ user: null, loading: false, error: null })
@@ -127,7 +118,6 @@ export function useAuth() {
     }
   }
 
-  // Fonction pour forcer la vérification d'auth
   const refreshAuth = async () => {
     await checkAuth()
   }
@@ -137,7 +127,6 @@ export function useAuth() {
       setAuthState(prev => ({ ...prev, loading: true }))
       await supabase.auth.signOut()
       setAuthState({ user: null, loading: false, error: null })
-      // Redirection immédiate pour éviter les états intermédiaires
       router.push('/auth/login')
     } catch (error) {
       setAuthState(prev => ({ ...prev, loading: false, error: 'Failed to sign out' }))

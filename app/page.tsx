@@ -18,7 +18,6 @@ export default function HomePage() {
     }
   }, [isAuthenticated, loading, router])
 
-  // Afficher un loader pendant la vérification
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center space-y-4">

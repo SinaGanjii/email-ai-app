@@ -100,7 +100,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
   const [replyText, setReplyText] = useState('')
   const replyBoxRef = useRef<HTMLDivElement>(null)
 
-  // Scroll vers la boîte de réponse quand elle s'ouvre
   useEffect(() => {
     if (showReplyBox && replyBoxRef.current) {
       setTimeout(() => {
@@ -114,7 +113,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
 
   return (
     <>
-      {/* Subject Line - Clean and Minimal */}
       <div className="px-3 sm:px-6 py-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <h1 className="text-lg sm:text-2xl font-normal text-gray-900 flex-1">
@@ -136,10 +134,8 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
         </div>
       </div>
 
-      {/* Email Content - Gmail Style Layout */}
       <div className="flex-1 overflow-auto bg-white">
         <div className="px-3 sm:px-6 py-4">
-          {/* Sender Info - Gmail Style Layout */}
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm sm:text-base flex-shrink-0">
@@ -181,7 +177,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
             </div>
           </div>
 
-          {/* Email Body - Clean Typography */}
           <div className="prose prose-gray max-w-none">
             <div className="text-gray-800 leading-relaxed text-sm sm:text-base">
               {selectedEmail.body_html ? (
@@ -201,11 +196,9 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
             </div>
           </div>
 
-          {/* Reply Box - Gmail Style */}
           {showReplyBox && (
             <div ref={replyBoxRef} className="mt-6 border-t border-gray-200 pt-6">
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                {/* Reply Header */}
                 <div className="px-3 sm:px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -223,7 +216,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
                   </div>
                 </div>
 
-                {/* Original Email (Collapsible) */}
                 {showOriginalEmail && (
                   <div className="px-3 sm:px-4 py-3 bg-gray-50 border-b border-gray-100">
                     <div className="text-xs text-gray-600 mb-2">Message original :</div>
@@ -241,7 +233,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
                   </div>
                 )}
 
-                {/* Reply Text Area */}
                 <div className="p-3 sm:p-4">
                   <Textarea
                     value={replyText}
@@ -252,7 +243,6 @@ export function EmailDetailContent({ selectedEmail, onToggleStar, onReply, onTog
                   />
                 </div>
 
-                {/* Reply Actions */}
                 <div className="px-3 sm:px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

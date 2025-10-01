@@ -1,62 +1,56 @@
--- Email AI Platform Database Schema
--- This schema is designed for Gmail integration with AI agents
 
--- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create mail schema for all email-related tables
 CREATE SCHEMA IF NOT EXISTS mail;
 
--- Set search path to mail schema
 SET search_path TO mail, public;
 
--- جدول لیبل‌ها (Labels)
 CREATE TABLE labels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,         
-    type TEXT DEFAULT 'system', -- 'system' یا 'custom'
-    color TEXT DEFAULT '#3B82F6', -- رنگ لیبل برای UI
+    type TEXT DEFAULT 'system', 
+    color TEXT DEFAULT '#3B82F6', 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- جدول threads (مکالمات / گروه کردن پیام‌ها)
+
 CREATE TABLE threads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     subject TEXT,
-    snippet TEXT,  -- پیش‌نمایش کوتاه متن
-    history_id BIGINT, -- از Gmail sync
-    gmail_thread_id TEXT UNIQUE, -- ID اصلی Gmail thread
+    snippet TEXT,  
+    history_id BIGINT,
+    gmail_thread_id TEXT UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- جدول پیام‌ها (Messages)
+
 CREATE TABLE messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     thread_id UUID REFERENCES threads(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    gmail_id TEXT UNIQUE, -- ID اصلی Gmail
-    gmail_message_id TEXT, -- Gmail message ID درون thread
+    gmail_id TEXT UNIQUE,
+    gmail_message_id TEXT,
     from_email TEXT NOT NULL,
-    from_name TEXT, -- نام فرستنده
+    from_name TEXT,
     to_emails TEXT[] NOT NULL,
     cc_emails TEXT[],
     bcc_emails TEXT[],
     subject TEXT,
     body TEXT,
-    body_html TEXT, -- نسخه HTML
+    body_html TEXT,
     is_read BOOLEAN DEFAULT FALSE,
     is_starred BOOLEAN DEFAULT FALSE,
     is_important BOOLEAN DEFAULT FALSE,
-    is_sent BOOLEAN DEFAULT FALSE, -- آیا پیام ارسال شده یا دریافت شده
-    is_archived BOOLEAN DEFAULT FALSE, -- آیا پیام آرشیو شده
-    is_deleted BOOLEAN DEFAULT FALSE, -- آیا پیام حذف شده (soft delete)
-    is_in_trash BOOLEAN DEFAULT FALSE, -- آیا پیام در سطل زباله است
-    reply_to_message_id UUID REFERENCES messages(id), -- برای پاسخ‌ها
-    forwarded_from_message_id UUID REFERENCES messages(id), -- برای فورواردها
+    is_sent BOOLEAN DEFAULT FALSE,
+    is_archived BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    is_in_trash BOOLEAN DEFAULT FALSE,
+    reply_to_message_id UUID REFERENCES messages(id),
+    forwarded_from_message_id UUID REFERENCES messages(id), 
     sent_at TIMESTAMP WITH TIME ZONE,
     received_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     deleted_at TIMESTAMP WITH TIME ZONE, -- زمان حذف
@@ -64,50 +58,47 @@ CREATE TABLE messages (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- نگاشت پیام‌ها ↔ لیبل‌ها (many-to-many)
 CREATE TABLE message_labels (
     message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     label_id UUID REFERENCES labels(id) ON DELETE CASCADE,
     PRIMARY KEY (message_id, label_id)
 );
 
--- جدول پیوست‌ها (Attachments)
+
 CREATE TABLE attachments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     filename TEXT NOT NULL,
     mime_type TEXT,
     size BIGINT,
-    storage_path TEXT, -- مسیر فایل ذخیره شده در Supabase Storage
-    gmail_attachment_id TEXT, -- ID پیوست در Gmail
+    storage_path TEXT, 
+    gmail_attachment_id TEXT, 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- جدول AI Agents
+
 CREATE TABLE ai_agents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
-    prompt TEXT NOT NULL, -- سیستم prompt برای agent
+    prompt TEXT NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- جدول Agent Actions (عملیات انجام شده توسط agent)
 CREATE TABLE agent_actions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agent_id UUID REFERENCES ai_agents(id) ON DELETE CASCADE,
     message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
-    action_type TEXT NOT NULL, -- 'reply', 'forward', 'archive', 'delete', 'label'
-    action_data JSONB, -- داده‌های اضافی برای action
-    status TEXT DEFAULT 'pending', -- 'pending', 'completed', 'failed'
+    action_type TEXT NOT NULL, 
+    action_data JSONB, 
+    status TEXT DEFAULT 'pending',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     completed_at TIMESTAMP WITH TIME ZONE
 );
 
--- جدول تنظیمات کاربر
 CREATE TABLE user_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
@@ -136,11 +127,9 @@ CREATE INDEX idx_messages_is_in_trash ON mail.messages(is_in_trash);
 CREATE INDEX idx_messages_reply_to ON mail.messages(reply_to_message_id);
 CREATE INDEX idx_messages_forwarded_from ON mail.messages(forwarded_from_message_id);
 
--- GIN index برای full-text search (مثل Gmail search bar)
 CREATE INDEX idx_messages_search
 ON mail.messages USING GIN (to_tsvector('english', coalesce(subject, '') || ' ' || coalesce(body, '')));
 
--- Composite indexes برای queries رایج
 CREATE INDEX idx_messages_user_unread ON mail.messages(user_id, is_read) WHERE is_read = false;
 CREATE INDEX idx_messages_user_starred ON mail.messages(user_id, is_starred) WHERE is_starred = true;
 CREATE INDEX idx_messages_user_important ON mail.messages(user_id, is_important) WHERE is_important = true;
@@ -165,7 +154,6 @@ CREATE INDEX idx_agent_actions_agent_id ON mail.agent_actions(agent_id);
 CREATE INDEX idx_agent_actions_message_id ON mail.agent_actions(message_id);
 CREATE INDEX idx_agent_actions_status ON mail.agent_actions(status);
 
--- RLS Policies (Row Level Security)
 ALTER TABLE labels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE threads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
@@ -175,7 +163,6 @@ ALTER TABLE ai_agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_actions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
--- Policies for labels
 CREATE POLICY "Users can view their own labels" ON labels
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -188,7 +175,6 @@ CREATE POLICY "Users can update their own labels" ON labels
 CREATE POLICY "Users can delete their own labels" ON labels
     FOR DELETE USING (auth.uid() = user_id);
 
--- Policies for threads
 CREATE POLICY "Users can view their own threads" ON threads
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -201,7 +187,6 @@ CREATE POLICY "Users can update their own threads" ON threads
 CREATE POLICY "Users can delete their own threads" ON threads
     FOR DELETE USING (auth.uid() = user_id);
 
--- Policies for messages
 CREATE POLICY "Users can view their own messages" ON messages
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -214,7 +199,6 @@ CREATE POLICY "Users can update their own messages" ON messages
 CREATE POLICY "Users can delete their own messages" ON messages
     FOR DELETE USING (auth.uid() = user_id);
 
--- Policies for message_labels
 CREATE POLICY "Users can view their own message_labels" ON message_labels
     FOR SELECT USING (
         EXISTS (
@@ -242,7 +226,7 @@ CREATE POLICY "Users can delete their own message_labels" ON message_labels
         )
     );
 
--- Policies for attachments
+
 CREATE POLICY "Users can view their own attachments" ON attachments
     FOR SELECT USING (
         EXISTS (
@@ -270,7 +254,7 @@ CREATE POLICY "Users can delete their own attachments" ON attachments
         )
     );
 
--- Policies for ai_agents
+
 CREATE POLICY "Users can view their own ai_agents" ON ai_agents
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -283,7 +267,7 @@ CREATE POLICY "Users can update their own ai_agents" ON ai_agents
 CREATE POLICY "Users can delete their own ai_agents" ON ai_agents
     FOR DELETE USING (auth.uid() = user_id);
 
--- Policies for agent_actions
+
 CREATE POLICY "Users can view their own agent_actions" ON agent_actions
     FOR SELECT USING (
         EXISTS (
@@ -311,7 +295,7 @@ CREATE POLICY "Users can update their own agent_actions" ON agent_actions
         )
     );
 
--- Policies for user_settings
+
 CREATE POLICY "Users can view their own settings" ON user_settings
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -321,7 +305,6 @@ CREATE POLICY "Users can insert their own settings" ON user_settings
 CREATE POLICY "Users can update their own settings" ON user_settings
     FOR UPDATE USING (auth.uid() = user_id);
 
--- Functions for automatic timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -330,7 +313,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Triggers for updated_at
 CREATE TRIGGER update_labels_updated_at BEFORE UPDATE ON labels
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -346,7 +328,6 @@ CREATE TRIGGER update_ai_agents_updated_at BEFORE UPDATE ON ai_agents
 CREATE TRIGGER update_user_settings_updated_at BEFORE UPDATE ON user_settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert default system labels for new users
 CREATE OR REPLACE FUNCTION mail.create_default_labels_for_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -359,14 +340,12 @@ BEGIN
         (NEW.id, 'SPAM', 'system', '#F97316'),
         (NEW.id, 'TRASH', 'system', '#6B7280');
     
-    -- Create default user settings
     INSERT INTO mail.user_settings (user_id) VALUES (NEW.id);
     
     RETURN NEW;
 END;
 $$ language 'plpgsql';
 
--- Trigger to create default labels when user signs up
 CREATE TRIGGER create_default_labels_trigger
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION mail.create_default_labels_for_user();

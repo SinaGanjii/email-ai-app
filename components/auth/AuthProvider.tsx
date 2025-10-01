@@ -8,7 +8,6 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // Initialiser le hook useAuth pour écouter les changements d'authentification
   useAuth()
 
   return <>{children}</>

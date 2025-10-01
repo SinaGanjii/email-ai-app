@@ -31,7 +31,6 @@ export function useEmailTableState() {
   }
 
   return {
-    // State
     selectedEmails,
     deleteModalOpen,
     archiveModalOpen,
@@ -39,7 +38,6 @@ export function useEmailTableState() {
     hoveredEmail,
     selectedEmail,
     
-    // Actions
     setSelectedEmails,
     setDeleteModalOpen,
     setArchiveModalOpen,

@@ -134,7 +134,6 @@ body {
   color: rgb(var(--foreground));
 }
 
-/* Custom scrollbar for dark theme */
 ::-webkit-scrollbar {
   width: 6px;
 }

@@ -4,9 +4,6 @@ export interface ResponseEmailResponse {
   error?: string
 }
 
-/**
- * Calls the email response agent via n8n webhook
- */
 export async function generateEmailResponse(emailBody: string): Promise<ResponseEmailResponse> {
   try {
     const cleanedBody = cleanEmailContent(emailBody)
@@ -46,26 +43,19 @@ export async function generateEmailResponse(emailBody: string): Promise<Response
   }
 }
 
-/**
- * Cleans the email content before sending it for response generation
- */
 export function cleanEmailContent(content: string): string {
   if (!content || content.trim() === '') {
     return 'No content available'
   }
 
-  // Remove HTML tags
   let cleaned = content.replace(/<[^>]*>/g, '')
   
-  // Remove excessive whitespace
   cleaned = cleaned.replace(/\s+/g, ' ').trim()
   
-  // Remove common email signatures and footers
   cleaned = cleaned.replace(/--\s*$.*$/gm, '')
   cleaned = cleaned.replace(/Sent from.*$/gm, '')
   cleaned = cleaned.replace(/Get Outlook for.*$/gm, '')
   
-  // Limit length to avoid token limits
   if (cleaned.length > 4000) {
     cleaned = cleaned.substring(0, 4000) + '...'
   }

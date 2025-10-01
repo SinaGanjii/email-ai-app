@@ -4,10 +4,7 @@ export const supabase = createClientComponentClient({
   options: { db: { schema: 'mail' } }
 })
 
-// Centralized redirect path - easy to change later
 export const DEFAULT_REDIRECT_PATH = '/dashboard'
-
-// Clean user object type
 export interface CleanUser {
   id: string
   email: string | null
@@ -18,7 +15,6 @@ export interface CleanUser {
 
 export async function signInWithGoogle(redirectTo: string = DEFAULT_REDIRECT_PATH) {
   try {
-    // Check if we're in browser environment
     if (typeof window === 'undefined') {
       throw new Error('signInWithGoogle can only be called in browser environment')
     }
@@ -51,7 +47,6 @@ export async function signOut(): Promise<void> {
       throw error
     }
     
-    // Force redirect to login page on successful sign out (only in browser)
     if (typeof window !== 'undefined') {
       window.location.href = '/auth/login'
     }
@@ -66,7 +61,6 @@ export async function getCurrentUser(): Promise<CleanUser | null> {
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error) {
-      // Ne pas logger les erreurs de session manquante (cas normal)
       if (error.message !== 'Auth session missing!') {
         console.error('Error getting current user:', error)
       }
@@ -77,7 +71,6 @@ export async function getCurrentUser(): Promise<CleanUser | null> {
       return null
     }
 
-    // Extract user info from raw_user_meta_data and user_metadata
     const rawUserMetaData = user.user_metadata || {}
     const appMetadata = user.app_metadata || {}
     
@@ -91,7 +84,6 @@ export async function getCurrentUser(): Promise<CleanUser | null> {
 
     return cleanUser
   } catch (error: any) {
-    // Ne pas logger les erreurs de session manquante (cas normal)
     if (error?.message !== 'Auth session missing!') {
       console.error('Get current user failed:', error)
     }

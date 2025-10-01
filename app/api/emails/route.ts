@@ -5,10 +5,8 @@ import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
   try {
-    // Create Supabase client with proper auth handling
     const supabaseAuth = createRouteHandlerClient({ cookies })
     
-    // Get session first
     const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession()
     
     if (sessionError || !session) {
@@ -18,7 +16,6 @@ export async function GET(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Create a new client with mail schema using the session token
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,13 +29,10 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    // Parse query parameters
     const { searchParams } = new URL(request.url)
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100) // Max 100
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
     const offset = parseInt(searchParams.get('offset') || '0')
     const folder = searchParams.get('folder') || 'all'
-
-    // Build base query - RLS policies handle user authorization automatically
     let query = supabase
       .from('messages')
       .select(`
@@ -63,7 +57,6 @@ export async function GET(request: NextRequest) {
       .order('received_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    // Apply folder filter
     switch (folder) {
       case 'inbox':
         query = query.eq('is_sent', false).eq('is_archived', false).eq('is_in_trash', false)
@@ -95,13 +88,10 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Get total count for pagination
-    // RLS policies handle user authorization automatically
     let countQuery = supabase
       .from('messages')
       .select('*', { count: 'exact', head: true })
 
-    // Apply same folder filter for count
     switch (folder) {
       case 'inbox':
         countQuery = countQuery.eq('is_sent', false).eq('is_archived', false).eq('is_in_trash', false)

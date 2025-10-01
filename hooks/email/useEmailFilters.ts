@@ -37,7 +37,6 @@ export function useEmailFilters() {
   }
 
   const cleanHtmlContent = (html: string) => {
-    // Remove or replace cid: references that cause ERR_UNKNOWN_URL_SCHEME
     return html
       .replace(/src="cid:[^"]*"/g, 'src=""')
       .replace(/src='cid:[^']*'/g, "src=''")

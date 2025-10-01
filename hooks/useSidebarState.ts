@@ -40,7 +40,6 @@ export function useSidebarState() {
   const enterTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialize sidebar state from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-open")
     if (saved !== null) {
@@ -49,21 +48,18 @@ export function useSidebarState() {
     setIsInitialized(true)
   }, [])
 
-  // Save state to localStorage
   useEffect(() => {
     if (isInitialized) {
       localStorage.setItem("sidebar-open", JSON.stringify(sidebarOpen))
     }
   }, [sidebarOpen, isInitialized])
 
-  // Reset overlay when fully open
   useEffect(() => {
     if (sidebarOpen) {
       resetOverlay()
     }
   }, [sidebarOpen])
 
-  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
@@ -86,7 +82,6 @@ export function useSidebarState() {
     }
   }
 
-  // Hover handlers with Gmail-like delays (desktop only)
   const handleEnter = () => {
     if (!sidebarOpen && !isNavigating && window.innerWidth >= 768) {
       if (leaveTimeoutRef.current) {
@@ -123,7 +118,6 @@ export function useSidebarState() {
   }
 
   const handleNavigationClick = () => {
-    // Close mobile menu on navigation
     setMobileMenuOpen(false)
     
     if (!sidebarOpen && window.innerWidth >= 768) {
@@ -131,14 +125,12 @@ export function useSidebarState() {
       if (enterTimeoutRef.current) clearTimeout(enterTimeoutRef.current)
       if (leaveTimeoutRef.current) clearTimeout(leaveTimeoutRef.current)
 
-      // Only show overlay if not already visible to prevent flicker
       if (!overlayVisible) {
         setSidebarHovered(true)
         setOverlayVisible(true)
         setOverlayAnimating(false)
       }
     }
-    // If sidebar is open, don't interfere with navigation
   }
 
   const state: SidebarState = {

@@ -52,12 +52,10 @@ export class EmailParser {
         return null
       }
 
-      // Extract headers
       const headers = message.payload.headers || []
       const getHeader = (name: string) => 
         headers.find((h: any) => h.name?.toLowerCase() === name.toLowerCase())?.value || ''
 
-      // Parse email addresses
       const fromHeader = getHeader('From')
       const toHeader = getHeader('To')
       const ccHeader = getHeader('Cc')
@@ -69,13 +67,10 @@ export class EmailParser {
       const ccEmails = this.parseEmailList(ccHeader)
       const bccEmails = this.parseEmailList(bccHeader)
 
-      // Determine if this is a sent message
       const isSent = message.labelIds?.includes('SENT') || false
 
-      // Extract body content
       const { body, bodyHtml } = this.extractBody(message.payload)
 
-      // Parse date
       const dateHeader = getHeader('Date')
       const sentAt = dateHeader ? new Date(dateHeader).toISOString() : null
 
@@ -145,7 +140,6 @@ export class EmailParser {
     let bodyHtml = ''
 
     if (payload.body?.data) {
-      // Single part message
       const content = Buffer.from(payload.body.data, 'base64').toString()
       if (payload.mimeType === 'text/html') {
         bodyHtml = content
@@ -153,7 +147,6 @@ export class EmailParser {
         body = content
       }
     } else if (payload.parts) {
-      // Multi-part message
       for (const part of payload.parts) {
         if (part.mimeType === 'text/plain' && part.body?.data) {
           body = Buffer.from(part.body.data, 'base64').toString()

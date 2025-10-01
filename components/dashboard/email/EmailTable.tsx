@@ -51,10 +51,8 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
 
   const { filterEmailsByFolder } = useEmailFilters()
 
-  // Filtrer les emails selon le dossier
   const filteredEmails = filterEmailsByFolder(emails, folder)
 
-  // Attendre que l'authentification soit vérifiée
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -99,9 +97,7 @@ export function EmailTable({ folder = 'inbox', title = 'Inbox' }: EmailTableProp
     )
   }
 
-  // Si un email est sélectionné, afficher la vue email
   if (selectedEmail) {
-    // Trouver l'email actuel dans le cache pour avoir les données à jour
     const currentEmail = emails.find(e => e.id === selectedEmail.id) || selectedEmail
     
     return (

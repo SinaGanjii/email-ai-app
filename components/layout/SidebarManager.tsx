@@ -28,7 +28,6 @@ export function SidebarManager({ state, actions, onComposeClick }: SidebarManage
 
   return (
     <>
-      {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -36,7 +35,6 @@ export function SidebarManager({ state, actions, onComposeClick }: SidebarManage
         />
       )}
 
-      {/* Hover overlay (desktop only) */}
       {!sidebarOpen && overlayVisible && window.innerWidth >= 768 && (
         <div
           className={cn(
@@ -61,7 +59,6 @@ export function SidebarManager({ state, actions, onComposeClick }: SidebarManage
         </div>
       )}
 
-      {/* Sidebar (desktop) */}
       <aside
         className={cn(
           "bg-gray-50/80 backdrop-blur-sm border-r border-gray-200/60 transition-all duration-300 shadow-sm relative h-full hidden md:block flex-shrink-0",
@@ -85,7 +82,6 @@ export function SidebarManager({ state, actions, onComposeClick }: SidebarManage
         </div>
       </aside>
 
-      {/* Mobile sidebar drawer */}
       <aside
         className={cn(
           "fixed top-0 left-0 h-full w-64 bg-gray-50/95 backdrop-blur-md border-r border-gray-200/50 shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden flex-shrink-0",

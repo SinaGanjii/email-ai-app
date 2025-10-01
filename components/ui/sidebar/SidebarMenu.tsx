@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/tooltip'
 import { useSidebar } from './SidebarProvider'
 
-// SidebarInset
 export function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
   return (
     <main
@@ -30,7 +29,6 @@ export function SidebarInset({ className, ...props }: React.ComponentProps<'main
   )
 }
 
-// SidebarInput
 export function SidebarInput({
   className,
   ...props
@@ -45,7 +43,6 @@ export function SidebarInput({
   )
 }
 
-// SidebarHeader
 export function SidebarHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -57,7 +54,6 @@ export function SidebarHeader({ className, ...props }: React.ComponentProps<'div
   )
 }
 
-// SidebarFooter
 export function SidebarFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -69,7 +65,6 @@ export function SidebarFooter({ className, ...props }: React.ComponentProps<'div
   )
 }
 
-// SidebarSeparator
 export function SidebarSeparator({
   className,
   ...props
@@ -84,7 +79,6 @@ export function SidebarSeparator({
   )
 }
 
-// SidebarContent
 export function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
@@ -111,7 +105,6 @@ export function SidebarGroup({ className, ...props }: React.ComponentProps<'div'
   )
 }
 
-// SidebarGroupLabel
 export function SidebarGroupLabel({
   className,
   asChild = false,
@@ -133,7 +126,6 @@ export function SidebarGroupLabel({
   )
 }
 
-// SidebarGroupAction
 export function SidebarGroupAction({
   className,
   asChild = false,
@@ -147,7 +139,6 @@ export function SidebarGroupAction({
       data-sidebar="group-action"
       className={cn(
         'text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
-        // Increases the hit area of the button on mobile.
         'after:absolute after:-inset-2 md:after:hidden',
         'group-data-[collapsible=icon]:hidden',
         className,
@@ -157,7 +148,6 @@ export function SidebarGroupAction({
   )
 }
 
-// SidebarGroupContent
 export function SidebarGroupContent({
   className,
   ...props
@@ -184,7 +174,6 @@ export function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>)
   )
 }
 
-// SidebarMenuItem
 export function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
   return (
     <li
@@ -218,7 +207,6 @@ const sidebarMenuButtonVariants = cva(
   },
 )
 
-// SidebarMenuButton
 export function SidebarMenuButton({
   asChild = false,
   isActive = false,
@@ -269,7 +257,6 @@ export function SidebarMenuButton({
   )
 }
 
-// SidebarMenuAction
 export function SidebarMenuAction({
   className,
   asChild = false,
@@ -287,7 +274,6 @@ export function SidebarMenuAction({
       data-sidebar="menu-action"
       className={cn(
         'text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer-hover/menu-button:text-sidebar-accent-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
-        // Increases the hit area of the button on mobile.
         'after:absolute after:-inset-2 md:after:hidden',
         'peer-data-[size=sm]/menu-button:top-1',
         'peer-data-[size=default]/menu-button:top-1.5',
@@ -302,7 +288,6 @@ export function SidebarMenuAction({
   )
 }
 
-// SidebarMenuBadge
 export function SidebarMenuBadge({
   className,
   ...props
@@ -325,7 +310,6 @@ export function SidebarMenuBadge({
   )
 }
 
-// SidebarMenuSkeleton
 export function SidebarMenuSkeleton({
   className,
   showIcon = false,
@@ -333,7 +317,6 @@ export function SidebarMenuSkeleton({
 }: React.ComponentProps<'div'> & {
   showIcon?: boolean
 }) {
-  // Random width between 50 to 90%.
   const width = React.useMemo(() => {
     return `${Math.floor(Math.random() * 40) + 50}%`
   }, [])
@@ -364,7 +347,6 @@ export function SidebarMenuSkeleton({
   )
 }
 
-// SidebarMenuSub
 export function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
   return (
     <ul
@@ -380,7 +362,6 @@ export function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul
   )
 }
 
-// SidebarMenuSubItem
 export function SidebarMenuSubItem({
   className,
   ...props
@@ -395,7 +376,6 @@ export function SidebarMenuSubItem({
   )
 }
 
-// SidebarMenuSubButton
 export function SidebarMenuSubButton({
   asChild = false,
   size = 'md',

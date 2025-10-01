@@ -43,7 +43,6 @@ export function SendEmailModal({ isOpen, onClose, replyTo }: SendEmailModalProps
       onSuccess: () => {
         console.log('Email sent successfully')
         onClose()
-        // Reset form
         setFormData({
           to: '',
           subject: '',

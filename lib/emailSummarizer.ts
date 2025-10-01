@@ -1,6 +1,3 @@
-/**
- * Service to call the email summarizer agent
- */
 
 export interface SummarizeEmailRequest {
   body: string
@@ -12,9 +9,6 @@ export interface SummarizeEmailResponse {
   error?: string
 }
 
-/**
- * Calls the email summarizer agent via n8n webhook
- */
 export async function summarizeEmail(emailBody: string): Promise<SummarizeEmailResponse> {
   try {
     const cleanedBody = cleanEmailContent(emailBody)
@@ -55,29 +49,22 @@ export async function summarizeEmail(emailBody: string): Promise<SummarizeEmailR
   }
 }
 
-/**
- * Cleans the email content before sending it for summarization
- */
 export function cleanEmailContent(content: string): string {
   if (!content || content.trim() === '') {
     return 'No content available'
   }
 
-  // Supprime les balises HTML
   let cleaned = content.replace(/<[^>]*>/g, '')
   
-  // Supprime les caractères de contrôle et normalise les espaces
   cleaned = cleaned
     .replace(/\s+/g, ' ')
     .replace(/[\r\n\t]+/g, ' ')
     .trim()
 
-  // Vérifie que le contenu n'est pas vide après nettoyage
   if (cleaned.length === 0) {
     return 'No readable content found'
   }
 
-  // Limite la longueur pour éviter les requêtes trop longues
   return cleaned.length > 2000
     ? cleaned.substring(0, 2000) + '...'
     : cleaned

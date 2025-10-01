@@ -49,7 +49,6 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
 
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-  // Sécurité : Vider le cache si l'utilisateur change
   useEffect(() => {
     if (!isAuthenticated || !user) {
       setEmails([])
@@ -59,7 +58,6 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, user])
 
   const fetchEmails = async (forceRefresh = false) => {
-    // Sécurité : Vérifier l'authentification avant chaque requête
     if (!isAuthenticated || !user) {
       console.warn('Cannot fetch emails: user not authenticated')
       return
@@ -67,7 +65,6 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
 
     const now = Date.now()
     
-    // Vérifier si on a un cache valide
     if (!forceRefresh && lastFetch && (now - lastFetch) < CACHE_DURATION && emails.length > 0) {
       console.log('Using cached emails for user:', user.id)
       return
@@ -158,10 +155,8 @@ export function EmailCacheProvider({ children }: { children: ReactNode }) {
     ))
   }
 
-  // Charger les emails seulement si authentifié et pas encore chargé
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Force refresh when user changes to ensure we get fresh data
       fetchEmails(true)
     }
   }, [isAuthenticated, user])

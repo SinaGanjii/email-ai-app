@@ -30,11 +30,9 @@ export default function AgentsPage() {
   const [isRecording, setIsRecording] = useState(false)
   const [isClient, setIsClient] = useState(false)
 
-  // Initialiser l'agent depuis l'URL et récupérer l'email depuis sessionStorage
   useEffect(() => {
     setIsClient(true)
     
-    // Récupérer l'agent depuis l'URL (seulement côté client)
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
       const agentFromUrl = urlParams.get('agent')
@@ -42,18 +40,15 @@ export default function AgentsPage() {
         setSelectedAgent(agentFromUrl)
       }
 
-      // Récupérer l'email depuis sessionStorage
       const emailData = sessionStorage.getItem('emailToSummarize')
       if (emailData) {
         try {
           const email = JSON.parse(emailData)
-          // Déclencher automatiquement l'action selon l'agent sélectionné
           if (agentFromUrl === 'smart-reply') {
             handleAutoResponse(email)
           } else {
             handleAutoSummarize(email)
           }
-          // Nettoyer sessionStorage après récupération
           sessionStorage.removeItem('emailToSummarize')
         } catch (error) {
           console.error('Erreur lors du parsing de l\'email:', error)
@@ -65,7 +60,6 @@ export default function AgentsPage() {
   const handleAutoSummarize = async (email: any) => {
     setIsLoading(true)
     
-    // Message utilisateur automatique
     const userMessage: Message = {
       id: Date.now().toString(),
       content: `Résumer cet email : "${email.subject}"`,
@@ -113,7 +107,6 @@ export default function AgentsPage() {
   const handleAutoResponse = async (email: any) => {
     setIsLoading(true)
     
-    // Message utilisateur automatique
     const userMessage: Message = {
       id: Date.now().toString(),
       content: `Générer une réponse pour cet email : "${email.subject}"`,
@@ -173,7 +166,6 @@ export default function AgentsPage() {
     setIsLoading(true)
 
 
-    // Simulate AI response for other agents
     setTimeout(() => {
       let responseContent = ""
       
@@ -197,7 +189,6 @@ export default function AgentsPage() {
 
   const handleVoiceRecord = () => {
     setIsRecording(!isRecording)
-    // Simulate voice recording
     if (!isRecording) {
       setTimeout(() => {
         setIsRecording(false)
@@ -208,7 +199,6 @@ export default function AgentsPage() {
 
   const selectedAgentData = agents.find((a) => a.id === selectedAgent)
 
-  // Ne pas rendre avant que le client soit prêt
   if (!isClient) {
     return (
       <div className="h-[calc(100vh-8rem)] flex items-center justify-center bg-background">
@@ -222,7 +212,6 @@ export default function AgentsPage() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col bg-background">
-        {/* Chat Messages Area */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
@@ -284,11 +273,9 @@ export default function AgentsPage() {
           )}
         </div>
 
-        {/* Input Area */}
         <div className="border-t border-border p-2 sm:p-4">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center space-x-2 sm:space-x-3 bg-muted rounded-3xl p-2 sm:p-3 shadow-sm">
-              {/* Agent Selector */}
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -325,7 +312,6 @@ export default function AgentsPage() {
                 )}
               </div>
 
-              {/* Message Input */}
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -334,7 +320,6 @@ export default function AgentsPage() {
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               />
 
-              {/* Voice Button */}
               <Button
                 onClick={handleVoiceRecord}
                 variant="ghost"
@@ -344,7 +329,6 @@ export default function AgentsPage() {
                 <Mic className="h-4 w-4" />
               </Button>
 
-              {/* Send Button */}
               <Button
                 onClick={handleSendMessage}
                 disabled={!message.trim() || isLoading}

@@ -35,12 +35,9 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
       <div className="relative bg-card border border-border rounded-lg shadow-lg w-full max-w-md mx-4">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -48,10 +45,8 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
           </Button>
         </div>
 
-        {/* Content */}
         <div className="p-6">{children}</div>
 
-        {/* Footer */}
         {footer && <div className="flex justify-end gap-2 p-6 border-t border-border">{footer}</div>}
       </div>
     </div>
